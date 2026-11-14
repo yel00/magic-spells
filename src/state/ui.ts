@@ -1,4 +1,5 @@
 import { createStore } from '../lib/store';
+import type { NoteSubject } from '../notes/types';
 import type { Track } from '../spotify/types';
 
 export type Sheet = 'none' | 'now' | 'queue' | 'devices';
@@ -9,10 +10,11 @@ interface UiState {
   pending: ((deviceId: string) => Promise<unknown>) | null;
   actionsFor: Track | null;
   infoFor: Track | null;
+  noteDraft: { subject: NoteSubject; id?: string; body: string } | null;
   toast: string | null;
 }
 
-export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, toast: null });
+export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, noteDraft: null, toast: null });
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 

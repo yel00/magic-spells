@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { ChevronLeft } from '../components/Icons';
 import { go } from '../lib/router';
+import { useStore } from '../lib/store';
 import { useData } from '../lib/useData';
+import { notes, STATUS_TEXT } from '../notes/store';
 import * as api from '../spotify/api';
 import { beginLogin, getClientId, isDemo, redirectUri, setClientId, setDemo, signOut } from '../spotify/auth';
 
@@ -45,6 +47,7 @@ export function Welcome({ error }: { error: string | null }) {
 
 export function Settings() {
   const me = useData('me', api.me);
+  const noteState = useStore(notes);
   return (
     <div className="page">
       <header className="page-head">
@@ -55,6 +58,10 @@ export function Settings() {
         <div className="setting">
           <span>Account</span>
           <strong>{isDemo() ? 'Demo music (not connected)' : me.data?.display_name || me.data?.id || '…'}</strong>
+        </div>
+        <div className="setting">
+          <span>Listening notes</span>
+          <strong>{noteState.notes.filter((n) => !n.deleted).length} notes · {STATUS_TEXT[noteState.status]}</strong>
         </div>
         {!isDemo() && (
           <div className="setting">

@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { DevicesSheet } from './components/DevicesSheet';
-import { HomeIcon, LibraryIcon, SearchIcon } from './components/Icons';
+import { HomeIcon, LibraryIcon, NotesIcon, SearchIcon } from './components/Icons';
 import { MiniPlayer } from './components/MiniPlayer';
+import { NoteEditor } from './components/Notes';
 import { NowPlaying } from './components/NowPlaying';
 import { QueueSheet } from './components/QueueSheet';
 import { Sheet } from './components/Sheet';
@@ -9,11 +10,15 @@ import { SongInfoSheet } from './components/SongInfoSheet';
 import { TrackActions } from './components/TrackActions';
 import { go, useRoute } from './lib/router';
 import { useStore } from './lib/store';
+import { useData } from './lib/useData';
+import { openNotes } from './notes/store';
+import * as api from './spotify/api';
 import { startPolling, stopPolling } from './state/player';
 import { openSheet, ui } from './state/ui';
 import { AlbumView, ArtistView, PlaylistView } from './views/Detail';
 import { Home } from './views/Home';
 import { Library } from './views/Library';
+import { NotesView } from './views/NotesView';
 import { Search } from './views/Search';
 import { Settings } from './views/Settings';
 
@@ -21,13 +26,16 @@ const TABS = [
   { name: 'home', label: 'Home', Icon: HomeIcon },
   { name: 'search', label: 'Search', Icon: SearchIcon },
   { name: 'library', label: 'Library', Icon: LibraryIcon },
+  { name: 'notes', label: 'Notes', Icon: NotesIcon },
 ];
 
 const scrollMemory = new Map<string, number>();
 
 export function App() {
   const route = useRoute();
-  const { sheet, actionsFor, infoFor, toast } = useStore(ui);
+  const { sheet, actionsFor, infoFor, noteDraft, toast } = useStore(ui);
+  const me = useData('me', api.me);
+  const userId = me.data?.id;
   const main = useRef<HTMLElement>(null);
   const key = `${route.name}/${route.id || ''}`;
 
@@ -35,6 +43,10 @@ export function App() {
     startPolling();
     return stopPolling;
   }, []);
+
+  useEffect(() => {
+    if (userId) openNotes(userId);
+  }, [userId]);
 
   // Each page keeps its own scroll position, so going back lands where you were.
   useLayoutEffect(() => {
@@ -49,6 +61,7 @@ export function App() {
   else if (route.name === 'playlist' && route.id) view = <PlaylistView id={route.id} />;
   else if (route.name === 'library') view = <Library />;
   else if (route.name === 'search') view = <Search />;
+  else if (route.name === 'notes') view = <NotesView />;
   else if (route.name === 'settings') view = <Settings />;
   else view = <Home />;
 
@@ -79,6 +92,10 @@ export function App() {
 
       <Sheet open={!!infoFor} onClose={() => ui.set({ infoFor: null })} title="About this song">
         {infoFor && <SongInfoSheet track={infoFor} />}
+      </Sheet>
+
+      <Sheet open={!!noteDraft} onClose={() => ui.set({ noteDraft: null })} title={noteDraft?.id ? 'Edit note' : 'New note'}>
+        {noteDraft && <NoteEditor key={noteDraft.id || noteDraft.subject.subject_uri} />}
       </Sheet>
 
       {toast && <div className="toast" role="status">{toast}</div>}

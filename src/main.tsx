@@ -34,6 +34,15 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
+// Keep bottom sheets above the on-screen keyboard: iOS draws the keyboard over
+// fixed elements, which would hide the note editor's Save button.
+const vv = window.visualViewport;
+if (vv) {
+  const lift = () => document.documentElement.style.setProperty('--kb', `${Math.max(0, window.innerHeight - vv.height - vv.offsetTop)}px`);
+  vv.addEventListener('resize', lift);
+  vv.addEventListener('scroll', lift);
+}
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));
 }

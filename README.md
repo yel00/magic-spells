@@ -8,7 +8,7 @@ Spotify leaves out — credits, biographies, lyrics notes, live versions, concer
 It is an installable web app. Spotify itself plays the audio; this app is the
 remote, so nothing here streams or stores music.
 
-## What works today (phases 1 and 2)
+## What works today (phases 1–3)
 
 - Sign in with Spotify (no server, no secret — PKCE)
 - Now playing: artwork, seek, play/pause/skip, shuffle, repeat, volume
@@ -25,6 +25,10 @@ remote, so nothing here streams or stores music.
   full credits — performers and instruments, writers, producers, engineers
 - About this song: background, writers, producers, samples and covers, and a
   link to lyrics and annotations (Genius)
+- Listening notes: write notes on any album, artist or song; song notes also
+  show on their album; a Notes tab lists and searches everything. Notes save on
+  the device instantly and work offline, and sync between your devices once a
+  database is connected
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
 - Demo mode with invented music, for looking around without an account
 
@@ -44,7 +48,12 @@ remote, so nothing here streams or stores music.
    <https://genius.com/api-clients>, press "Generate Access Token", and add it
    in Vercel as the environment variable `GENIUS_ACCESS_TOKEN`, then redeploy.
    Without it everything else works and "About this song" says it isn't connected.
-6. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
+6. **Turn on notes sync (optional)**: in the Vercel project, open Storage →
+   Create Database → Neon (Postgres, free tier) and connect it to the project.
+   That adds `DATABASE_URL` automatically; redeploy. The table is created on
+   first use. Without it, notes still work but stay on the device they were
+   written on.
+7. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
 
 ## Develop
 
@@ -72,7 +81,7 @@ npm run build      # typecheck + production build
 
 1. ~~Player, devices, queue, library, search~~
 2. ~~Rich artist and album pages: Wikipedia, MusicBrainz credits, Genius~~
-3. Listening notes, synced between devices
+3. ~~Listening notes, synced between devices~~
 4. Discovery (Last.fm / ListenBrainz) and YouTube live versions
 5. Concert scanner with notifications
 6. Musician tools: BPM/key lookup, microphone analyzer, tab search and player
@@ -90,4 +99,16 @@ npm run build      # typecheck + production build
   through its API; the app shows the song's background and links to the lyrics.
 
 API keys for later phases (YouTube, Ticketmaster) will live on the server the
-same way. Listening notes will need a small database.
+same way.
+
+## How notes sync
+
+Notes are written to the device first, then sent to `api/notes.js`, which
+stores them in Postgres. The app proves who you are with the Spotify sign-in it
+already has — the server asks Spotify whose sign-in it is and files notes under
+that account, so there is no second login and nobody else's notes are reachable.
+If two devices edit the same note, the most recent edit wins. Deleting a note
+on one device removes it from the others.
+
+To run the database tests locally: `DATABASE_URL=postgres://… npm test`
+(they are skipped when no database is given; CI always runs them).

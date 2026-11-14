@@ -6,7 +6,7 @@ import * as api from '../spotify/api';
 import type { Track } from '../spotify/types';
 import { commands } from '../state/player';
 import { openSheet, toast, ui } from '../state/ui';
-import { Art } from './Art';
+import { Art, pickImage } from './Art';
 
 export function TrackActions({ track }: { track: Track }) {
   const [mode, setMode] = useState<'menu' | 'playlists'>('menu');
@@ -55,6 +55,20 @@ export function TrackActions({ track }: { track: Track }) {
             {liked ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
           </button>
           <button className="action" onClick={() => ui.set({ actionsFor: null, infoFor: track })}>About this song</button>
+          <button
+            className="action"
+            onClick={() =>
+              ui.set({
+                actionsFor: null,
+                noteDraft: {
+                  subject: { subject_uri: track.uri, parent_uri: track.album?.uri || null, title: track.name, subtitle: names(track.artists), image: pickImage(track.album?.images, 150) || null },
+                  body: '',
+                },
+              })
+            }
+          >
+            Write a note
+          </button>
           {track.album && <button className="action" onClick={() => nav(`/album/${track.album!.id}`)}>Go to album</button>}
           {track.artists[0] && <button className="action" onClick={() => nav(`/artist/${track.artists[0].id}`)}>Go to artist</button>}
         </>

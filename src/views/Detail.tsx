@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { AboutSkeleton, AboutText, Chips, Credits, Facts, Links } from '../components/About';
-import { Art } from '../components/Art';
+import { Art, pickImage } from '../components/Art';
 import { ChevronLeft, HeartIcon, PlayIcon, ShuffleIcon } from '../components/Icons';
+import { NotesSection } from '../components/Notes';
 import { Card, Shelf, Status } from '../components/Shelf';
 import { TrackRow } from '../components/TrackRow';
 import { albumInfo, artistInfo } from '../enrich';
@@ -116,6 +117,7 @@ export function AlbumView({ id }: { id: string }) {
           </div>
         ))}
       </div>
+      <NotesSection subject={{ subject_uri: a.uri, parent_uri: null, title: a.name, subtitle: names(a.artists), image: pickImage(a.images, 150) || null }} />
       {info.loading && <section className="about"><AboutSkeleton /></section>}
       {info.data && (
         <section className="about">
@@ -165,6 +167,7 @@ export function ArtistView({ id }: { id: string }) {
           {singles.map((x) => <Card key={x.id} title={x.name} subtitle={year(x.release_date)} images={x.images} to={`/album/${x.id}`} />)}
         </Shelf>
       )}
+      <NotesSection subject={{ subject_uri: a.uri, parent_uri: null, title: a.name, subtitle: 'Artist', image: pickImage(a.images, 150) || null }} />
     </div>
   );
 }
