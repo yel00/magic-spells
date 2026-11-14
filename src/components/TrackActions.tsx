@@ -54,6 +54,7 @@ export function TrackActions({ track }: { track: Track }) {
           <button className="action" onClick={toggleLike} disabled={liked === null}>
             {liked ? 'Remove from Liked Songs' : 'Add to Liked Songs'}
           </button>
+          <button className="action" onClick={() => ui.set({ actionsFor: null, infoFor: track })}>About this song</button>
           {track.album && <button className="action" onClick={() => nav(`/album/${track.album!.id}`)}>Go to album</button>}
           {track.artists[0] && <button className="action" onClick={() => nav(`/artist/${track.artists[0].id}`)}>Go to artist</button>}
         </>

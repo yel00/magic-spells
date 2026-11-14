@@ -8,10 +8,11 @@ interface UiState {
   /** What to do once the user picks a device (set when a command found nothing to play on). */
   pending: ((deviceId: string) => Promise<unknown>) | null;
   actionsFor: Track | null;
+  infoFor: Track | null;
   toast: string | null;
 }
 
-export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, toast: null });
+export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, toast: null });
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 

@@ -49,6 +49,7 @@ export interface Album extends AlbumRef {
   tracks: Paging<Track>;
   copyrights?: { text: string }[];
   genres?: string[];
+  external_ids?: { upc?: string };
 }
 
 /** Playlist entries come back as `item` (2026 API) or `track` (older shape). */

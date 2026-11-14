@@ -8,7 +8,7 @@ Spotify leaves out — credits, biographies, lyrics notes, live versions, concer
 It is an installable web app. Spotify itself plays the audio; this app is the
 remote, so nothing here streams or stores music.
 
-## What works today (phase 1)
+## What works today (phases 1 and 2)
 
 - Sign in with Spotify (no server, no secret — PKCE)
 - Now playing: artwork, seek, play/pause/skip, shuffle, repeat, volume
@@ -19,6 +19,12 @@ remote, so nothing here streams or stores music.
 - Search across Spotify
 - Album, artist and playlist pages; save albums, follow artists, like songs
 - Playlists: create one and add tracks from anywhere
+- Artist pages: biography (Wikipedia), where and when they started, genres,
+  and links to their site, Bandcamp, Discogs, Setlist.fm and more (MusicBrainz)
+- Album pages: the album's story (Wikipedia), label and catalogue number, and
+  full credits — performers and instruments, writers, producers, engineers
+- About this song: background, writers, producers, samples and covers, and a
+  link to lyrics and annotations (Genius)
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
 - Demo mode with invented music, for looking around without an account
 
@@ -34,7 +40,11 @@ remote, so nothing here streams or stores music.
 4. **Deploy**: import this repo into Vercel (it detects Vite; no settings needed).
    Optionally set `VITE_SPOTIFY_CLIENT_ID` so the client ID is baked in;
    otherwise paste it on the welcome screen. The client ID is not a secret.
-5. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
+5. **Turn on song background (optional)**: create an API client at
+   <https://genius.com/api-clients>, press "Generate Access Token", and add it
+   in Vercel as the environment variable `GENIUS_ACCESS_TOKEN`, then redeploy.
+   Without it everything else works and "About this song" says it isn't connected.
+6. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
 
 ## Develop
 
@@ -42,6 +52,7 @@ remote, so nothing here streams or stores music.
 npm install
 npm run dev        # http://127.0.0.1:5173
 npm test           # unit tests
+npm run test:live  # checks against the real MusicBrainz and Wikipedia (not in CI)
 npm run build      # typecheck + production build
 ```
 
@@ -59,13 +70,24 @@ npm run build      # typecheck + production build
 
 ## Roadmap
 
-1. ~~Player, devices, queue, library, search~~ (this release)
-2. Rich artist and album pages: Wikipedia, MusicBrainz credits, Genius
+1. ~~Player, devices, queue, library, search~~
+2. ~~Rich artist and album pages: Wikipedia, MusicBrainz credits, Genius~~
 3. Listening notes, synced between devices
 4. Discovery (Last.fm / ListenBrainz) and YouTube live versions
 5. Concert scanner with notifications
 6. Musician tools: BPM/key lookup, microphone analyzer, tab search and player
 7. Later: Beatport (needs partner access), native shell for TestFlight, NAS files
 
-Phases 2 onward need a small server (API keys for Genius, YouTube, Ticketmaster
-must not ship in the app) and a database for notes.
+## Where the extra information comes from
+
+- **MusicBrainz and Wikipedia** are free and need no key. The app asks them
+  directly, at most once a second, and remembers answers on the device for a
+  month. An artist is only matched on an exact name, and a Wikipedia article is
+  only used when MusicBrainz points to it or it clearly describes music —
+  showing nothing is better than showing the wrong person.
+- **Genius** needs a key, so the app asks its own small server function
+  (`api/genius.js`), which holds the key. Genius does not license lyrics
+  through its API; the app shows the song's background and links to the lyrics.
+
+API keys for later phases (YouTube, Ticketmaster) will live on the server the
+same way. Listening notes will need a small database.

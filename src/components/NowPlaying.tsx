@@ -105,6 +105,7 @@ export function NowPlaying() {
               <DeviceIcon type={playback.device.type} size={18} />
               <span>{playback.device.name}</span>
             </button>
+            <button className="pill" onClick={() => ui.set({ infoFor: item })}><span>About</span></button>
             <button className="pill" onClick={() => openSheet('queue')}><QueueIcon size={18} /><span>Queue</span></button>
           </div>
         </div>

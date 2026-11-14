@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --dir tests",
+    "test:live": "vitest run --dir tests-live"
   },
   "dependencies": {
     "react": "^18.3.1",

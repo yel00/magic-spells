@@ -5,6 +5,7 @@ import { MiniPlayer } from './components/MiniPlayer';
 import { NowPlaying } from './components/NowPlaying';
 import { QueueSheet } from './components/QueueSheet';
 import { Sheet } from './components/Sheet';
+import { SongInfoSheet } from './components/SongInfoSheet';
 import { TrackActions } from './components/TrackActions';
 import { go, useRoute } from './lib/router';
 import { useStore } from './lib/store';
@@ -26,7 +27,7 @@ const scrollMemory = new Map<string, number>();
 
 export function App() {
   const route = useRoute();
-  const { sheet, actionsFor, toast } = useStore(ui);
+  const { sheet, actionsFor, infoFor, toast } = useStore(ui);
   const main = useRef<HTMLElement>(null);
   const key = `${route.name}/${route.id || ''}`;
 
@@ -74,6 +75,10 @@ export function App() {
       <Sheet open={sheet === 'devices'} onClose={() => openSheet('none')} title="Play on"><DevicesSheet /></Sheet>
       <Sheet open={!!actionsFor} onClose={() => ui.set({ actionsFor: null })} title="Track options">
         {actionsFor && <TrackActions track={actionsFor} />}
+      </Sheet>
+
+      <Sheet open={!!infoFor} onClose={() => ui.set({ infoFor: null })} title="About this song">
+        {infoFor && <SongInfoSheet track={infoFor} />}
       </Sheet>
 
       {toast && <div className="toast" role="status">{toast}</div>}

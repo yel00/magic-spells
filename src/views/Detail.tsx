@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { AboutSkeleton, AboutText, Chips, Credits, Facts, Links } from '../components/About';
 import { Art } from '../components/Art';
 import { ChevronLeft, HeartIcon, PlayIcon, ShuffleIcon } from '../components/Icons';
 import { Card, Shelf, Status } from '../components/Shelf';
 import { TrackRow } from '../components/TrackRow';
+import { albumInfo, artistInfo } from '../enrich';
 import { formatDuration, names, year } from '../lib/format';
 import { go } from '../lib/router';
 import { invalidate, useData } from '../lib/useData';
@@ -79,6 +81,9 @@ function Hero({
 
 export function AlbumView({ id }: { id: string }) {
   const { data: a, loading, error } = useData(`album:${id}`, () => api.album(id));
+  const info = useData(a ? `info:album:${id}` : null, () =>
+    albumInfo({ name: a!.name, artist: a!.artists[0]?.name || '', upc: a!.external_ids?.upc }).then((v) => v ?? false),
+  );
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
   const tracks = a.tracks.items;
   const total = tracks.reduce((n, t) => n + t.duration_ms, 0);
@@ -111,6 +116,17 @@ export function AlbumView({ id }: { id: string }) {
           </div>
         ))}
       </div>
+      {info.loading && <section className="about"><AboutSkeleton /></section>}
+      {info.data && (
+        <section className="about">
+          <h2>About this album</h2>
+          {info.data.about && <AboutText summary={info.data.about} />}
+          <Facts items={info.data.facts} />
+          {info.data.credits.length > 0 && <h2 className="credits-head">Credits</h2>}
+          <Credits groups={info.data.credits} />
+          <Links links={info.data.links} />
+        </section>
+      )}
       {a.copyrights?.[0] && <p className="fineprint">{a.copyrights[0].text}</p>}
     </div>
   );
@@ -119,15 +135,25 @@ export function AlbumView({ id }: { id: string }) {
 export function ArtistView({ id }: { id: string }) {
   const { data: a, loading, error } = useData(`artist:${id}`, () => api.artist(id));
   const disc = useData(`artist:${id}:albums`, () => api.artistAlbums(id));
+  const info = useData(a ? `info:artist:${id}` : null, () => artistInfo(a!.name).then((v) => v ?? false));
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
   const all = disc.data?.items || [];
   const albums = all.filter((x) => x.album_type === 'album');
   const singles = all.filter((x) => x.album_type !== 'album');
   return (
     <div className="page">
-      <Hero images={a.images} round kicker="Artist" title={a.name} uri={a.uri} lines={[(a.genres || []).slice(0, 3).join(' · ')]}>
+      <Hero images={a.images} round kicker="Artist" title={a.name} uri={a.uri} lines={[(a.genres?.length ? a.genres : info.data ? info.data.genres : []).slice(0, 3).join(' · ')]}>
         <SaveButton uri={a.uri} cacheKey="library:artists" labels={['Follow', 'Unfollow']} />
       </Hero>
+      {info.loading && <section className="about"><AboutSkeleton /></section>}
+      {info.data && (
+        <section className="about">
+          {info.data.bio && <AboutText summary={info.data.bio} />}
+          <Facts items={info.data.facts} />
+          {!a.genres?.length && <Chips items={info.data.genres} />}
+          <Links links={info.data.links} />
+        </section>
+      )}
       <Status loading={disc.loading} error={disc.error} />
       {albums.length > 0 && (
         <Shelf title="Albums">
