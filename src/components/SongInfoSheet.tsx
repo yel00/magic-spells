@@ -4,6 +4,7 @@ import { NotConfigured, songInfo } from '../enrich';
 import type { Track } from '../spotify/types';
 import { AboutSkeleton } from './About';
 import { Art } from './Art';
+import { Videos } from './Discover';
 
 export function SongInfoSheet({ track }: { track: Track }) {
   const artist = track.artists[0]?.name || '';
@@ -14,6 +15,7 @@ export function SongInfoSheet({ track }: { track: Track }) {
         <Art images={track.album?.images} size={44} />
         <span className="row-text"><span className="row-title">{track.name}</span><span className="row-sub">{names(track.artists)}</span></span>
       </div>
+      <Videos query={`${artist} ${track.name} live`} title="Live & other versions" />
       {loading && <AboutSkeleton />}
       {error && (
         <p className="status">

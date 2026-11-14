@@ -1,4 +1,6 @@
 import { createStore } from '../lib/store';
+import type { MixRequest } from '../components/Discover';
+import type { Video } from '../discover';
 import type { NoteSubject } from '../notes/types';
 import type { Track } from '../spotify/types';
 
@@ -11,10 +13,12 @@ interface UiState {
   actionsFor: Track | null;
   infoFor: Track | null;
   noteDraft: { subject: NoteSubject; id?: string; body: string } | null;
+  mix: MixRequest | null;
+  video: Video | null;
   toast: string | null;
 }
 
-export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, noteDraft: null, toast: null });
+export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, noteDraft: null, mix: null, video: null, toast: null });
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 

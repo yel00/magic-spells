@@ -228,7 +228,8 @@ export async function demoRequest(method: string, url: URL, body: any): Promise<
   if (seg[0] === 'playlists') { const p = playlists.find((x) => x.id === seg[1]); return p ? publicPlaylist(p) : notFound(); }
 
   if (path === '/search') {
-    const term = (q.get('q') || '').toLowerCase();
+    // Understand the artist:"…" filter the discovery code uses.
+    const term = (q.get('q') || '').replace(/^artist:"(.*)"$/, '$1').toLowerCase();
     const has = (s: string) => s.toLowerCase().includes(term);
     return {
       tracks: page(tracks.filter((t) => has(t.name) || has(t.artists[0].name)).slice(0, 10)),

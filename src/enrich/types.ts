@@ -11,6 +11,8 @@ export interface Link {
 }
 
 export interface ArtistInfo {
+  /** MusicBrainz id: lets other open sources (ListenBrainz) identify the artist exactly. */
+  mbid?: string;
   bio?: Summary;
   facts: string[];
   genres: string[];

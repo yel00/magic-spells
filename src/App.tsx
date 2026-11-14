@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { DevicesSheet } from './components/DevicesSheet';
-import { HomeIcon, LibraryIcon, NotesIcon, SearchIcon } from './components/Icons';
+import { MixSheet, VideoSheet } from './components/Discover';
+import { DiscoverIcon, HomeIcon, LibraryIcon, NotesIcon, SearchIcon } from './components/Icons';
 import { MiniPlayer } from './components/MiniPlayer';
 import { NoteEditor } from './components/Notes';
 import { NowPlaying } from './components/NowPlaying';
@@ -16,6 +17,7 @@ import * as api from './spotify/api';
 import { startPolling, stopPolling } from './state/player';
 import { openSheet, ui } from './state/ui';
 import { AlbumView, ArtistView, PlaylistView } from './views/Detail';
+import { DiscoverView } from './views/DiscoverView';
 import { Home } from './views/Home';
 import { Library } from './views/Library';
 import { NotesView } from './views/NotesView';
@@ -26,6 +28,7 @@ const TABS = [
   { name: 'home', label: 'Home', Icon: HomeIcon },
   { name: 'search', label: 'Search', Icon: SearchIcon },
   { name: 'library', label: 'Library', Icon: LibraryIcon },
+  { name: 'discover', label: 'Discover', Icon: DiscoverIcon },
   { name: 'notes', label: 'Notes', Icon: NotesIcon },
 ];
 
@@ -33,7 +36,7 @@ const scrollMemory = new Map<string, number>();
 
 export function App() {
   const route = useRoute();
-  const { sheet, actionsFor, infoFor, noteDraft, toast } = useStore(ui);
+  const { sheet, actionsFor, infoFor, noteDraft, mix, video, toast } = useStore(ui);
   const me = useData('me', api.me);
   const userId = me.data?.id;
   const main = useRef<HTMLElement>(null);
@@ -62,6 +65,7 @@ export function App() {
   else if (route.name === 'library') view = <Library />;
   else if (route.name === 'search') view = <Search />;
   else if (route.name === 'notes') view = <NotesView />;
+  else if (route.name === 'discover') view = <DiscoverView />;
   else if (route.name === 'settings') view = <Settings />;
   else view = <Home />;
 
@@ -96,6 +100,13 @@ export function App() {
 
       <Sheet open={!!noteDraft} onClose={() => ui.set({ noteDraft: null })} title={noteDraft?.id ? 'Edit note' : 'New note'}>
         {noteDraft && <NoteEditor key={noteDraft.id || noteDraft.subject.subject_uri} />}
+      </Sheet>
+
+      <Sheet open={!!mix} onClose={() => ui.set({ mix: null })} title={mix?.kind === 'artist' ? `${mix.seed} mix` : 'New to you'}>
+        {mix && <MixSheet key={mix.kind === 'artist' ? mix.seed : 'surprise'} request={mix} />}
+      </Sheet>
+      <Sheet open={!!video} onClose={() => ui.set({ video: null })} title="Video">
+        {video && <VideoSheet video={video} />}
       </Sheet>
 
       {toast && <div className="toast" role="status">{toast}</div>}

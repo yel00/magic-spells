@@ -22,7 +22,7 @@ export function artistInfo(name: string): Promise<ArtistInfo | null> {
       (await searchSummary('artist', name).catch(soft)) ||
       undefined;
     const links = [...(bio ? [{ label: 'Wikipedia', url: bio.url }] : []), ...(mb?.links || [])];
-    const info: ArtistInfo | null = mb || bio ? { bio, facts: mb?.facts || [], genres: mb?.genres || [], links } : null;
+    const info: ArtistInfo | null = mb || bio ? { mbid: mb?.mbid, bio, facts: mb?.facts || [], genres: mb?.genres || [], links } : null;
     if (flaky && (!mb || !bio)) throw new Provisional(info);
     return info;
   });

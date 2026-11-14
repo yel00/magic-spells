@@ -2,9 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { AboutSkeleton, AboutText, Chips, Credits, Facts, Links } from '../components/About';
 import { Art, pickImage } from '../components/Art';
 import { ChevronLeft, HeartIcon, PlayIcon, ShuffleIcon } from '../components/Icons';
+import { SimilarShelf, Videos } from '../components/Discover';
 import { NotesSection } from '../components/Notes';
 import { Card, Shelf, Status } from '../components/Shelf';
 import { TrackRow } from '../components/TrackRow';
+import { popularTracks } from '../discover';
 import { albumInfo, artistInfo } from '../enrich';
 import { formatDuration, names, year } from '../lib/format';
 import { go } from '../lib/router';
@@ -12,7 +14,7 @@ import { invalidate, useData } from '../lib/useData';
 import * as api from '../spotify/api';
 import type { Image } from '../spotify/types';
 import { commands } from '../state/player';
-import { toast } from '../state/ui';
+import { toast, ui } from '../state/ui';
 
 function Back() {
   return (
@@ -138,6 +140,7 @@ export function ArtistView({ id }: { id: string }) {
   const { data: a, loading, error } = useData(`artist:${id}`, () => api.artist(id));
   const disc = useData(`artist:${id}:albums`, () => api.artistAlbums(id));
   const info = useData(a ? `info:artist:${id}` : null, () => artistInfo(a!.name).then((v) => v ?? false));
+  const popular = useData(a ? `popular:${id}` : null, () => popularTracks(a!.name).then((v) => v ?? []));
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
   const all = disc.data?.items || [];
   const albums = all.filter((x) => x.album_type === 'album');
@@ -145,8 +148,19 @@ export function ArtistView({ id }: { id: string }) {
   return (
     <div className="page">
       <Hero images={a.images} round kicker="Artist" title={a.name} uri={a.uri} lines={[(a.genres?.length ? a.genres : info.data ? info.data.genres : []).slice(0, 3).join(' · ')]}>
+        <button className="btn" onClick={() => ui.set({ mix: { kind: 'artist', seed: a.name } })}>Mix</button>
         <SaveButton uri={a.uri} cacheKey="library:artists" labels={['Follow', 'Unfollow']} />
       </Hero>
+      {!!popular.data?.length && (
+        <section className="shelf">
+          <h2>Popular</h2>
+          <div className="rows">
+            {popular.data.slice(0, 5).map((t, i) => (
+              <TrackRow key={t.uri} track={t} number={i + 1} showArtist={false} onPlay={() => commands.playTracks(popular.data!.map((x) => x.uri), i)} />
+            ))}
+          </div>
+        </section>
+      )}
       {info.loading && <section className="about"><AboutSkeleton /></section>}
       {info.data && (
         <section className="about">
@@ -167,6 +181,8 @@ export function ArtistView({ id }: { id: string }) {
           {singles.map((x) => <Card key={x.id} title={x.name} subtitle={year(x.release_date)} images={x.images} to={`/album/${x.id}`} />)}
         </Shelf>
       )}
+      <SimilarShelf name={a.name} title="Similar artists" />
+      <Videos query={`${a.name} live`} title="Live" />
       <NotesSection subject={{ subject_uri: a.uri, parent_uri: null, title: a.name, subtitle: 'Artist', image: pickImage(a.images, 150) || null }} />
     </div>
   );

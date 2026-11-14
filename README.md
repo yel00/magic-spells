@@ -8,7 +8,7 @@ Spotify leaves out — credits, biographies, lyrics notes, live versions, concer
 It is an installable web app. Spotify itself plays the audio; this app is the
 remote, so nothing here streams or stores music.
 
-## What works today (phases 1–3)
+## What works today (phases 1–4)
 
 - Sign in with Spotify (no server, no secret — PKCE)
 - Now playing: artwork, seek, play/pause/skip, shuffle, repeat, volume
@@ -29,6 +29,12 @@ remote, so nothing here streams or stores music.
   show on their album; a Notes tab lists and searches everything. Notes save on
   the device instantly and work offline, and sync between your devices once a
   database is connected
+- Discovery: similar artists and an artist's popular tracks on every artist
+  page; a Discover tab with artists near your favourites that you don't follow
+  yet; one-tap mixes built around an artist or from new-to-you artists, which
+  can be played straight away or saved as a Spotify playlist
+- Live versions: YouTube performances on artist pages and in "About this song",
+  playing inside the app (Spotify pauses while a video plays)
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
 - Demo mode with invented music, for looking around without an account
 
@@ -53,7 +59,15 @@ remote, so nothing here streams or stores music.
    That adds `DATABASE_URL` automatically; redeploy. The table is created on
    first use. Without it, notes still work but stay on the device they were
    written on.
-7. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
+7. **Better suggestions (optional)**: discovery works with no key, using
+   ListenBrainz. For Last.fm's stronger "people who play X also play Y" data,
+   create a key at <https://www.last.fm/api/account/create> and add it in
+   Vercel as `LASTFM_API_KEY`.
+8. **Videos inside the app (optional)**: in Google Cloud, enable "YouTube Data
+   API v3", create an API key, and add it in Vercel as `YOUTUBE_API_KEY`. The
+   free allowance is about 100 searches a day; results are cached for a week.
+   Without it, the app shows a link that opens the same search on YouTube.
+9. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
 
 ## Develop
 
@@ -82,7 +96,7 @@ npm run build      # typecheck + production build
 1. ~~Player, devices, queue, library, search~~
 2. ~~Rich artist and album pages: Wikipedia, MusicBrainz credits, Genius~~
 3. ~~Listening notes, synced between devices~~
-4. Discovery (Last.fm / ListenBrainz) and YouTube live versions
+4. ~~Discovery (Last.fm / ListenBrainz) and YouTube live versions~~
 5. Concert scanner with notifications
 6. Musician tools: BPM/key lookup, microphone analyzer, tab search and player
 7. Later: Beatport (needs partner access), native shell for TestFlight, NAS files
@@ -100,6 +114,19 @@ npm run build      # typecheck + production build
 
 API keys for later phases (YouTube, Ticketmaster) will live on the server the
 same way.
+
+## How discovery works
+
+Spotify closed its recommendation, related-artist and top-track endpoints to
+new apps, so:
+
+- **Who is similar** comes from Last.fm (if a key is set) or ListenBrainz.
+- **An artist's popular tracks** come from a Spotify search limited to that
+  artist, which returns results roughly in popularity order.
+- **A mix** takes two popular tracks from each of about fourteen similar
+  artists, threads three of the seed artist's own through it, and never plays
+  the same artist twice in a row. Building one takes a few seconds the first
+  time (around fifteen Spotify searches, three at a time) and is cached after.
 
 ## How notes sync
 

@@ -29,6 +29,7 @@ const q = (s: string) => encodeURIComponent(`"${s.replace(/["\\]/g, ' ')}"`);
 // ---- Artists ----------------------------------------------------------------
 
 export interface MbArtist {
+  mbid: string;
   facts: string[];
   genres: string[];
   links: Link[];
@@ -82,7 +83,7 @@ export async function findArtist(name: string): Promise<MbArtist | null> {
   const a = await mb<any>(`/artist/${hit.id}?inc=url-rels+genres`);
   const { links, wikidata } = linksFrom(a.relations);
   const genres = (a.genres || []).sort((x: any, y: any) => y.count - x.count).slice(0, 5).map((g: any) => g.name);
-  return { facts: artistFacts(a), genres, links, wikidata };
+  return { mbid: hit.id, facts: artistFacts(a), genres, links, wikidata };
 }
 
 // ---- Albums -----------------------------------------------------------------

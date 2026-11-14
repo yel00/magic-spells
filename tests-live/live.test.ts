@@ -41,3 +41,19 @@ describe('live lookups', () => {
     expect(a?.credits.find((g) => g.title === 'Performers')?.people.map((p) => p.name)).toContain('John Coltrane');
   }, 120_000);
 });
+
+describe('live discovery', () => {
+  it('finds similar artists without any API key', async () => {
+    const { similarArtists } = await import('../src/discover');
+    const r = await similarArtists('Radiohead');
+    show('similar to Radiohead', r);
+    expect(r?.source).toBe('ListenBrainz');
+    expect(r?.names.length).toBeGreaterThan(8);
+    expect(r?.names).not.toContain('Radiohead');
+  }, 60_000);
+
+  it('returns nothing for an unknown artist', async () => {
+    const { similarArtists } = await import('../src/discover');
+    expect(await similarArtists('Zxqv Nonexistent Band 93871')).toBeNull();
+  }, 60_000);
+});

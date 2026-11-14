@@ -152,6 +152,10 @@ export const playlistItems = (id: string) => get<Paging<PlaylistEntry>>(`/playli
 export const search = (q: string) =>
   get<SearchResult>('/search', { q, type: 'track,artist,album,playlist', limit: 10 });
 
+export const searchArtists = (name: string) => get<SearchResult>('/search', { q: `artist:"${name.replace(/"/g, '')}"`, type: 'artist', limit: 5 });
+export const searchTracksByArtist = (name: string) =>
+  get<SearchResult>('/search', { q: `artist:"${name.replace(/"/g, '')}"`, type: 'track', limit: 10 });
+
 // ---- Playlists --------------------------------------------------------------
 
 export const createPlaylist = (name: string, description = '') =>
