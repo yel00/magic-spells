@@ -117,6 +117,12 @@ remote, so nothing here streams or stores music.
    your area.
 10. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
 
+## iPhone and iPad app
+
+The site can be installed from Safari (Share → Add to Home Screen). To install
+it through TestFlight as a native app instead, see
+[docs/TESTFLIGHT.md](docs/TESTFLIGHT.md).
+
 ## Develop
 
 ```bash
@@ -147,7 +153,15 @@ npm run build      # typecheck + production build
 4. ~~Discovery (Last.fm / ListenBrainz) and YouTube live versions~~
 5. ~~Concert scanner~~ (push notifications for new shows still to do)
 6. ~~Musician tools: BPM/key lookup, microphone analyzer, tab search and player~~
-7. Later: Beatport (needs partner access), native shell for TestFlight, NAS files
+7. ~~Native shell for TestFlight~~ (configured; not yet built on a Mac)
+
+### Backlog
+
+- Beatport: a "find on Beatport" link, and full browsing if Beatport grants partner access
+- NAS / local files
+- Podcasts and audiobooks
+- Push notifications for newly announced concerts
+- Sonos grouping through Sonos's own control API
 
 ## Where the extra information comes from
 
