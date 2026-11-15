@@ -50,6 +50,13 @@ remote, so nothing here streams or stores music.
   - Tab player: import Guitar Pro or MusicXML files, pick the guitar, bass or
     piano part, slow it to 75% or 50%, loop it, add a click; files stay on
     the device
+- Cross-links: every name in an album's credits opens that person's page —
+  biography, the bands they belong to, and everything they produced, played
+  on or mixed, each of which opens on Spotify. Artist pages list band members
+  the same way. Record labels and genres are tappable and open everything
+  Spotify files under them
+- Lyrics on Now Playing: time-synced where available, with the current line
+  highlighted and tap-to-jump; plain lyrics otherwise
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
 - Demo mode with invented music, for looking around without an account
 
@@ -160,6 +167,21 @@ is not stored on the server. Distances are in miles.
 It scans when the app is opened, not in the background: a show announced today
 appears the next time you open the app. Background push notifications would
 need a scheduled server job and are not built yet.
+
+## How cross-linking and lyrics work
+
+- **People.** Album credits come from MusicBrainz, which gives each person a
+  permanent id. A person's page combines their MusicBrainz record (biography
+  link, band memberships) with their Discogs credits list, which records what
+  they did on each release. Discogs needs no key and allows 25 requests a
+  minute; the most recent 300 releases are fetched. Tapping a credited album
+  looks for it on Spotify by exact title and artist.
+- **Labels and genres** are Spotify searches filtered by label or genre, ten
+  results at a time.
+- **Lyrics** come from [LRCLIB](https://lrclib.net), a free community database.
+  Lyrics are only used when they belong to a recording of the same length
+  (within three seconds), so a live version's timing is never applied to the
+  studio track. LRCLIB is community-sourced, not a licensed lyrics service.
 
 ## How the musician tools work
 

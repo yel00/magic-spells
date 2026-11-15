@@ -156,6 +156,13 @@ export const searchArtists = (name: string) => get<SearchResult>('/search', { q:
 export const searchTracksByArtist = (name: string) =>
   get<SearchResult>('/search', { q: `artist:"${name.replace(/"/g, '')}"`, type: 'track', limit: 10 });
 
+export const searchAlbums = (title: string, artist: string) =>
+  get<SearchResult>('/search', { q: `album:"${title.replace(/"/g, '')}"${artist ? ` artist:"${artist.replace(/"/g, '')}"` : ''}`, type: 'album', limit: 10 });
+
+/** Everything under a record label (albums) or a genre (artists), ten at a time. */
+export const browse = (kind: 'label' | 'genre', name: string, offset: number) =>
+  get<SearchResult>('/search', { q: `${kind}:"${name.replace(/"/g, '')}"`, type: kind === 'label' ? 'album' : 'artist', limit: 10, offset });
+
 // ---- Playlists --------------------------------------------------------------
 
 export const createPlaylist = (name: string, description = '') =>

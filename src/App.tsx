@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { DevicesSheet } from './components/DevicesSheet';
 import { MixSheet, VideoSheet } from './components/Discover';
 import { DiscoverIcon, HomeIcon, LibraryIcon, NotesIcon, SearchIcon } from './components/Icons';
+import { LyricsSheet } from './components/LyricsSheet';
 import { MiniPlayer } from './components/MiniPlayer';
 import { NoteEditor } from './components/Notes';
 import { NowPlaying } from './components/NowPlaying';
@@ -17,12 +18,14 @@ import { openNotes } from './notes/store';
 import * as api from './spotify/api';
 import { startPolling, stopPolling } from './state/player';
 import { openSheet, ui } from './state/ui';
+import { BrowseView } from './views/BrowseView';
 import { ConcertsView } from './views/ConcertsView';
 import { AlbumView, ArtistView, PlaylistView } from './views/Detail';
 import { DiscoverView } from './views/DiscoverView';
 import { Home } from './views/Home';
 import { Library } from './views/Library';
 import { NotesView } from './views/NotesView';
+import { PersonView } from './views/PersonView';
 import { Search } from './views/Search';
 import { Settings } from './views/Settings';
 import { TabPlayerView } from './views/TabPlayerView';
@@ -40,7 +43,7 @@ const scrollMemory = new Map<string, number>();
 
 export function App() {
   const route = useRoute();
-  const { sheet, actionsFor, infoFor, noteDraft, mix, video, toast } = useStore(ui);
+  const { sheet, actionsFor, infoFor, noteDraft, lyrics, mix, video, toast } = useStore(ui);
   const me = useData('me', api.me);
   const userId = me.data?.id;
   const fresh = newCount(useStore(concerts));
@@ -75,6 +78,8 @@ export function App() {
   else if (route.name === 'notes') view = <NotesView />;
   else if (route.name === 'discover') view = <DiscoverView />;
   else if (route.name === 'concerts') view = <ConcertsView />;
+  else if (route.name === 'person' && route.id) view = <PersonView key={route.id} id={route.id} />;
+  else if ((route.name === 'label' || route.name === 'genre') && route.id) view = <BrowseView key={key} kind={route.name} name={route.id} />;
   else if (route.name === 'tools') view = <ToolsView />;
   else if (route.name === 'tab' && route.id) view = <TabPlayerView id={route.id} />;
   else if (route.name === 'settings') view = <Settings />;
@@ -113,6 +118,9 @@ export function App() {
         {noteDraft && <NoteEditor key={noteDraft.id || noteDraft.subject.subject_uri} />}
       </Sheet>
 
+      <Sheet open={lyrics} onClose={() => ui.set({ lyrics: false })} title="Lyrics">
+        {lyrics && <LyricsSheet />}
+      </Sheet>
       <Sheet open={!!mix} onClose={() => ui.set({ mix: null })} title={mix?.kind === 'artist' ? `${mix.seed} mix` : 'New to you'}>
         {mix && <MixSheet key={mix.kind === 'artist' ? mix.seed : 'surprise'} request={mix} />}
       </Sheet>

@@ -13,12 +13,13 @@ interface UiState {
   actionsFor: Track | null;
   infoFor: Track | null;
   noteDraft: { subject: NoteSubject; id?: string; body: string } | null;
+  lyrics: boolean;
   mix: MixRequest | null;
   video: Video | null;
   toast: string | null;
 }
 
-export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, noteDraft: null, mix: null, video: null, toast: null });
+export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, noteDraft: null, lyrics: false, mix: null, video: null, toast: null });
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 

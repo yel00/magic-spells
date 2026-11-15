@@ -229,7 +229,20 @@ export async function demoRequest(method: string, url: URL, body: any): Promise<
 
   if (path === '/search') {
     // Understand the artist:"…" filter the discovery code uses.
-    const term = (q.get('q') || '').replace(/^artist:"(.*)"$/, '$1').toLowerCase();
+    const raw = q.get('q') || '';
+    const field = (name: string) => new RegExp(`${name}:"([^"]*)"`).exec(raw)?.[1]?.toLowerCase();
+    const offset = Number(q.get('offset')) || 0;
+    // The filters the app uses elsewhere: label, genre, and album-with-artist lookups.
+    if (field('label')) return { albums: { ...page(albums.map(({ tracks: _t, ...ref }) => ref).slice(offset, offset + 10)), total: albums.length } };
+    if (field('genre')) {
+      const list = artists.filter((a) => (a.genres || []).includes(field('genre')!));
+      return { artists: { ...page(list.slice(offset, offset + 10)), total: list.length } };
+    }
+    if (field('album')) {
+      const list = albums.filter((a) => a.name.toLowerCase() === field('album') && (!field('artist') || a.artists[0].name.toLowerCase() === field('artist')));
+      return { albums: page(list.map(({ tracks: _t, ...ref }) => ref)) };
+    }
+    const term = raw.replace(/^artist:"(.*)"$/, '$1').toLowerCase();
     const has = (s: string) => s.toLowerCase().includes(term);
     return {
       tracks: page(tracks.filter((t) => has(t.name) || has(t.artists[0].name)).slice(0, 10)),

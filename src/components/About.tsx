@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { CreditGroup, Link, Summary } from '../enrich/types';
+import type { CreditGroup, Link, Related, Summary } from '../enrich/types';
+import { go } from '../lib/router';
 
 export function AboutText({ summary }: { summary: Summary }) {
   const [open, setOpen] = useState(false);
@@ -15,14 +16,49 @@ export function AboutText({ summary }: { summary: Summary }) {
   );
 }
 
-export function Facts({ items }: { items: string[] }) {
+export function Facts({ items, label }: { items: string[]; label?: string }) {
   if (!items.length) return null;
-  return <p className="facts">{items.join(' · ')}</p>;
+  return (
+    <p className="facts">
+      {items.map((item, i) => (
+        <span key={i}>
+          {i > 0 && ' · '}
+          {/* The label's name links to everything on that label. */}
+          {label && item.includes(label)
+            ? <button className="link-quiet inline" onClick={() => go(`/label/${encodeURIComponent(label)}`)}>{item}</button>
+            : item}
+        </span>
+      ))}
+    </p>
+  );
 }
 
+/** Genre chips; each opens the artists Spotify files under that genre. */
 export function Chips({ items }: { items: string[] }) {
   if (!items.length) return null;
-  return <div className="chips">{items.map((g) => <span key={g} className="chip">{g}</span>)}</div>;
+  return (
+    <div className="chips">
+      {items.map((g) => <button key={g} className="chip chip-tap" onClick={() => go(`/genre/${encodeURIComponent(g)}`)}>{g}</button>)}
+    </div>
+  );
+}
+
+/** Band members, or the bands a person belongs to; each opens that artist's credits page. */
+export function RelatedChips({ title, items }: { title: string; items: Related[] | undefined }) {
+  if (!items?.length) return null;
+  return (
+    <div className="related">
+      <h3>{title}</h3>
+      <div className="chips">
+        {items.map((r) => (
+          <button key={r.mbid} className="chip chip-tap chip-person" onClick={() => go(`/person/${r.mbid}`)}>
+            <span>{r.name}</span>
+            {r.detail && <span className="chip-detail">{r.detail}</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function Links({ links }: { links: Link[] }) {
@@ -44,7 +80,9 @@ export function Credits({ groups }: { groups: CreditGroup[] }) {
           <ul>
             {g.people.map((p) => (
               <li key={p.name}>
-                <span>{p.name}</span>
+                {p.mbid
+                  ? <button className="credit-name" onClick={() => go(`/person/${p.mbid}`)}>{p.name}</button>
+                  : <span>{p.name}</span>}
                 {p.detail && <span className="credit-detail">{p.detail}</span>}
               </li>
             ))}

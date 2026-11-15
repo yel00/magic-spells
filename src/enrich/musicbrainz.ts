@@ -1,6 +1,6 @@
 // MusicBrainz: the open music encyclopedia. Free, no key, but limited to one
 // request a second, so calls are queued and everything is cached hard.
-import type { CreditGroup, Link, Person } from './types';
+import type { CreditGroup, Link, Person, Related } from './types';
 import { cleanTitle, norm, sameName } from './text';
 
 const BASE = 'https://musicbrainz.org/ws/2';
@@ -30,6 +30,10 @@ const q = (s: string) => encodeURIComponent(`"${s.replace(/["\\]/g, ' ')}"`);
 
 export interface MbArtist {
   mbid: string;
+  name: string;
+  discogsId?: string;
+  members: Related[];
+  memberOf: Related[];
   facts: string[];
   genres: string[];
   links: Link[];
@@ -44,9 +48,40 @@ const HOSTS: [RegExp, string][] = [
 ];
 const LINK_ORDER = ['Official site', 'Bandcamp', 'YouTube', 'Instagram', 'Genius', 'Discogs', 'AllMusic', 'Last.fm', 'Setlist.fm', 'Songkick', 'Bandsintown', 'SoundCloud', 'Rate Your Music', 'Facebook', 'X', 'TikTok'];
 
-export function linksFrom(relations: any[] | undefined): { links: Link[]; wikidata?: string } {
+/** Who is in a band, or which bands a person is in, from MusicBrainz "member of band" relationships. */
+export function bandLinks(relations: any[] | undefined): { members: Related[]; memberOf: Related[] } {
+  interface Entry { name: string; mbid: string; roles: string[]; begin: string; end: string; current: boolean }
+  const members = new Map<string, Entry>();
+  const memberOf = new Map<string, Entry>();
+  for (const r of relations || []) {
+    if (r?.type !== 'member of band' || r['target-type'] !== 'artist' || !r.artist?.id) continue;
+    // "backward" means the other artist is a member of this one.
+    const into = r.direction === 'backward' ? members : memberOf;
+    // MusicBrainz lists one row per instrument and per stint; fold them into one entry per person.
+    const e = into.get(r.artist.id) || into.set(r.artist.id, { name: r.artist.name, mbid: r.artist.id, roles: [], begin: '', end: '', current: false }).get(r.artist.id)!;
+    for (const a of r.attributes || []) {
+      const role = String(a).replace(/ \(drum set\)/, '');
+      if (!['original', 'founder', 'eponymous', 'additional', 'minor'].includes(role) && !e.roles.includes(role)) e.roles.push(role);
+    }
+    if (r.begin && (!e.begin || r.begin < e.begin)) e.begin = r.begin;
+    if (!r.ended) e.current = true;
+    else if (r.end && r.end > e.end) e.end = r.end;
+  }
+  const order = (m: Map<string, Entry>): Related[] =>
+    [...m.values()]
+      .sort((a, b) => Number(b.current) - Number(a.current) || (a.begin || '9999').localeCompare(b.begin || '9999'))
+      .slice(0, 30)
+      .map((e) => {
+        const years = e.begin ? `${e.begin.slice(0, 4)}–${e.current ? '' : e.end.slice(0, 4)}` : e.current ? '' : 'former';
+        return { name: e.name, mbid: e.mbid, detail: [e.roles.slice(0, 3).join(', '), years].filter(Boolean).join(' · ') || undefined };
+      });
+  return { members: order(members), memberOf: order(memberOf) };
+}
+
+export function linksFrom(relations: any[] | undefined): { links: Link[]; wikidata?: string; discogsId?: string } {
   const found = new Map<string, string>();
   let wikidata: string | undefined;
+  let discogsId: string | undefined;
   for (const r of relations || []) {
     const url: string | undefined = r?.url?.resource;
     if (!url || r.ended) continue;
@@ -54,11 +89,12 @@ export function linksFrom(relations: any[] | undefined): { links: Link[]; wikida
       wikidata = url.split('/').pop();
       continue;
     }
+    if (r.type === 'discogs') discogsId = /\/artist\/(\d+)/.exec(url)?.[1] ?? discogsId;
     const label = r.type === 'official homepage' ? 'Official site' : HOSTS.find(([re]) => re.test(url))?.[1];
     if (label && !found.has(label)) found.set(label, url);
   }
   const links = LINK_ORDER.filter((l) => found.has(l)).map((label) => ({ label, url: found.get(label)! }));
-  return { links, wikidata };
+  return { links, wikidata, discogsId };
 }
 
 export function artistFacts(a: any): string[] {
@@ -79,16 +115,25 @@ export async function findArtist(name: string): Promise<MbArtist | null> {
   const hits = search.artists || [];
   // Only trust an exact name match; a near miss would put the wrong biography on the page.
   const hit = hits.find((a) => a.score >= 90 && (sameName(a.name, name) || (a.aliases || []).some((x: any) => sameName(x.name, name))));
-  if (!hit) return null;
-  const a = await mb<any>(`/artist/${hit.id}?inc=url-rels+genres`);
-  const { links, wikidata } = linksFrom(a.relations);
+  return hit ? artistById(hit.id) : null;
+}
+
+const MBID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isMbid = (s: string) => MBID.test(s);
+
+export async function artistById(mbid: string): Promise<MbArtist | null> {
+  if (!isMbid(mbid)) return null;
+  const a = await mb<any>(`/artist/${mbid}?inc=url-rels+genres+artist-rels`);
+  if (!a?.id) return null;
+  const { links, wikidata, discogsId } = linksFrom(a.relations);
   const genres = (a.genres || []).sort((x: any, y: any) => y.count - x.count).slice(0, 5).map((g: any) => g.name);
-  return { mbid: hit.id, facts: artistFacts(a), genres, links, wikidata };
+  return { mbid: a.id, name: a.name, discogsId, ...bandLinks(a.relations), facts: artistFacts(a), genres, links, wikidata };
 }
 
 // ---- Albums -----------------------------------------------------------------
 
 export interface MbAlbum {
+  label?: string;
   facts: string[];
   credits: CreditGroup[];
   links: Link[];
@@ -106,17 +151,19 @@ const ARTWORK: Record<string, string> = { 'graphic design': 'design', design: 'd
 
 /** Fold the per-track relationship data MusicBrainz returns into album-level credit groups. */
 export function creditsFrom(release: any): CreditGroup[] {
-  const groups = new Map<string, Map<string, { details: Map<string, number>; count: number }>>();
+  const groups = new Map<string, Map<string, { details: Map<string, number>; count: number; mbid?: string }>>();
+  let mbid: string | undefined;
   const add = (group: string, name: string, detail?: string) => {
     if (!name) return;
     const g = groups.get(group) || groups.set(group, new Map()).get(group)!;
-    const p = g.get(name) || g.set(name, { details: new Map(), count: 0 }).get(name)!;
+    const p = g.get(name) || g.set(name, { details: new Map(), count: 0, mbid }).get(name)!;
     p.count++;
     if (detail) p.details.set(detail, (p.details.get(detail) || 0) + 1);
   };
   const take = (rel: any) => {
     if (rel['target-type'] !== 'artist' || !rel.artist) return;
     const name: string = rel['target-credit'] || rel.artist.name;
+    mbid = rel.artist.id;
     const attrs: string[] = (rel.attributes || []).filter((a: string) => !['additional', 'guest', 'solo', 'co', 'executive', 'assistant', 'associate'].includes(a));
     const prefix = (rel.attributes || []).find((a: string) => ['executive', 'co', 'assistant', 'additional'].includes(a));
     if (PERFORM.has(rel.type)) {
@@ -148,7 +195,7 @@ export function creditsFrom(release: any): CreditGroup[] {
         .slice(0, 40)
         .map(([name, p]): Person => {
           const details = [...p.details.entries()].sort((a, b) => b[1] - a[1]).map(([d]) => d);
-          return { name, detail: details.slice(0, 5).join(', ').replace(/ \(drum set\)/g, '') || undefined };
+          return { name, detail: details.slice(0, 5).join(', ').replace(/ \(drum set\)/g, '') || undefined, ...(p.mbid ? { mbid: p.mbid } : {}) };
         }),
     }));
 }
@@ -211,6 +258,7 @@ export async function findAlbum(album: { name: string; artist: string; upc?: str
 
 function shape(release: any, wikidata: string | undefined): MbAlbum {
   return {
+    label: (release['label-info'] || []).map((l: any) => l.label?.name).find(Boolean),
     facts: albumFacts(release),
     credits: creditsFrom(release),
     links: [{ label: 'MusicBrainz', url: `https://musicbrainz.org/release/${release.id}` }],

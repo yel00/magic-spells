@@ -2,7 +2,7 @@
 // page has been looked up it opens instantly for weeks and costs the free
 // data sources nothing.
 
-const PREFIX = 'ms.c2:';
+const PREFIX = 'ms.c3:';
 const DAY = 86_400_000;
 export const TTL = { long: 30 * DAY, miss: 2 * DAY };
 

@@ -70,3 +70,36 @@ describe('live tempo and key lookup', () => {
     }
   }, 120_000);
 });
+
+describe('live cross-links', () => {
+  it('finds a band’s members, and a producer’s credits', async () => {
+    const { artistInfo, personInfo } = await import('../src/enrich');
+    const { creditsFor } = await import('../src/enrich/discogs');
+    const band = await artistInfo('Radiohead');
+    console.log('members:', band?.members?.map((m) => `${m.name} (${m.detail})`).join('; '));
+    expect(band?.members?.map((m) => m.name)).toContain('Thom Yorke');
+    const thom = band!.members!.find((m) => m.name === 'Thom Yorke')!;
+    const person = await personInfo(thom.mbid);
+    console.log('Thom Yorke → member of:', person?.memberOf?.map((m) => m.name).join(', '), '| discogs', person?.discogsId, '| bio', person?.bio?.text.slice(0, 80));
+    expect(person?.memberOf?.map((m) => m.name)).toContain('Radiohead');
+    expect(person?.discogsId).toBeTruthy();
+    const producer = await personInfo('~Nigel Godrich');
+    const credits = await creditsFor(producer!.discogsId!);
+    console.log('Godrich:', credits?.total, 'releases |', credits?.groups.map((g) => `${g.role} ${g.works.length}`).join(', '));
+    console.log('produced sample:', credits?.groups.find((g) => g.role === 'Produced')?.works.slice(0, 6).map((w) => `${w.title} — ${w.artist} (${w.year})`).join(' | '));
+    expect(credits?.groups.some((g) => g.role === 'Produced')).toBe(true);
+  }, 180_000);
+});
+
+describe('live lyrics', () => {
+  it('finds synced lyrics by exact match and by search', async () => {
+    const { lyricsFor } = await import('../src/lyrics');
+    const exact = await lyricsFor({ name: 'Karma Police', artist: 'Radiohead', album: 'OK Computer', durationMs: 264000 });
+    console.log('exact:', exact?.synced, exact?.lines.length, JSON.stringify(exact?.lines.slice(0, 2)));
+    expect(exact?.lines.length).toBeGreaterThan(10);
+    const searched = await lyricsFor({ name: 'Karma Police - Remastered', artist: 'Radiohead', album: 'Some Compilation', durationMs: 264500 });
+    console.log('search:', searched?.synced, searched?.lines.length);
+    expect(searched?.lines.length).toBeGreaterThan(10);
+    expect(await lyricsFor({ name: 'Zxqv Nonexistent Song 93871', artist: 'Nobody At All', durationMs: 200000 })).toBeNull();
+  }, 60_000);
+});

@@ -3,29 +3,45 @@
 import { isDemo } from '../spotify/auth';
 import { cached, Provisional } from './cache';
 import { demoAlbumInfo, demoArtistInfo, demoSongInfo } from './demo';
-import { findAlbum, findArtist } from './musicbrainz';
+import { artistById, findAlbum, findArtist, isMbid, type MbArtist } from './musicbrainz';
 import { cleanTitle, norm } from './text';
 import type { AlbumInfo, ArtistInfo, SongInfo } from './types';
 import { searchSummary, summaryForWikidata } from './wikipedia';
 
+async function describe(lookup: () => Promise<MbArtist | null>, nameForSearch?: string): Promise<ArtistInfo | null> {
+  let flaky = false;
+  const soft = () => {
+    flaky = true;
+    return null;
+  };
+  const mb = await lookup().catch(soft);
+  const bio =
+    (mb?.wikidata && (await summaryForWikidata(mb.wikidata).catch(soft))) ||
+    (nameForSearch && (await searchSummary('artist', nameForSearch).catch(soft))) ||
+    undefined;
+  const links = [...(bio ? [{ label: 'Wikipedia', url: bio.url }] : []), ...(mb?.links || [])];
+  const info: ArtistInfo | null =
+    mb || bio
+      ? { mbid: mb?.mbid, name: mb?.name, discogsId: mb?.discogsId, members: mb?.members, memberOf: mb?.memberOf, bio, facts: mb?.facts || [], genres: mb?.genres || [], links }
+      : null;
+  if (flaky && (!mb || !bio)) throw new Provisional(info);
+  return info;
+}
+
 export function artistInfo(name: string): Promise<ArtistInfo | null> {
   if (isDemo()) return Promise.resolve(demoArtistInfo(name));
-  return cached(`artist:${norm(name)}`, async () => {
-    let flaky = false;
-    const soft = () => {
-      flaky = true;
-      return null;
-    };
-    const mb = await findArtist(name).catch(soft);
-    const bio =
-      (mb?.wikidata && (await summaryForWikidata(mb.wikidata).catch(soft))) ||
-      (await searchSummary('artist', name).catch(soft)) ||
-      undefined;
-    const links = [...(bio ? [{ label: 'Wikipedia', url: bio.url }] : []), ...(mb?.links || [])];
-    const info: ArtistInfo | null = mb || bio ? { mbid: mb?.mbid, bio, facts: mb?.facts || [], genres: mb?.genres || [], links } : null;
-    if (flaky && (!mb || !bio)) throw new Provisional(info);
-    return info;
-  });
+  return cached(`artist:${norm(name)}`, () => describe(() => findArtist(name), name));
+}
+
+/**
+ * Anyone with a credit: a producer, a session player, a songwriter. `ref` is a
+ * MusicBrainz id (from a credit) or "~Name" (from a source that only gives names).
+ */
+export function personInfo(ref: string): Promise<ArtistInfo | null> {
+  if (isDemo()) return Promise.resolve(demoArtistInfo(ref.replace(/^~|^demo-/, '')));
+  if (isMbid(ref)) return cached(`person:${ref}`, () => describe(() => artistById(ref)));
+  const name = ref.replace(/^~/, '');
+  return artistInfo(name);
 }
 
 export function albumInfo(album: { name: string; artist: string; upc?: string }): Promise<AlbumInfo | null> {
@@ -42,7 +58,7 @@ export function albumInfo(album: { name: string; artist: string; upc?: string })
       (await searchSummary('album', cleanTitle(album.name), album.artist).catch(soft)) ||
       undefined;
     const links = [...(about ? [{ label: 'Wikipedia', url: about.url }] : []), ...(mb?.links || [])];
-    const info: AlbumInfo | null = mb || about ? { about, facts: mb?.facts || [], credits: mb?.credits || [], links } : null;
+    const info: AlbumInfo | null = mb || about ? { about, label: mb?.label, facts: mb?.facts || [], credits: mb?.credits || [], links } : null;
     if (flaky && (!mb || !about)) throw new Provisional(info);
     return info;
   });

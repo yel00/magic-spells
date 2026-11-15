@@ -11,6 +11,21 @@ import { camelot, keyName } from '../tools/keys';
 import { go } from '../lib/router';
 import { ui } from '../state/ui';
 
+/** Names from Genius, each linking to that person's credits page. */
+function People({ names: list }: { names: string[] }) {
+  const open = (name: string) => {
+    ui.set({ infoFor: null, sheet: 'none' });
+    go(`/person/${encodeURIComponent(`~${name}`)}`);
+  };
+  return (
+    <span className="people">
+      {list.map((n, i) => (
+        <span key={n}>{i > 0 && ', '}<button className="credit-name" onClick={() => open(n)}>{n}</button></span>
+      ))}
+    </span>
+  );
+}
+
 export function SongInfoSheet({ track }: { track: Track }) {
   const artist = track.artists[0]?.name || '';
   const { data, loading, error } = useData(`info:song:${track.uri}`, () => songInfo(track.name, artist).then((v) => v ?? false));
@@ -52,8 +67,8 @@ export function SongInfoSheet({ track }: { track: Track }) {
           {data.description && <p className="songinfo-text">{data.description}</p>}
           <dl className="songinfo-facts">
             {data.released && (<><dt>Released</dt><dd>{data.released}</dd></>)}
-            {data.writers.length > 0 && (<><dt>Written by</dt><dd>{data.writers.join(', ')}</dd></>)}
-            {data.producers.length > 0 && (<><dt>Produced by</dt><dd>{data.producers.join(', ')}</dd></>)}
+            {data.writers.length > 0 && (<><dt>Written by</dt><dd><People names={data.writers} /></dd></>)}
+            {data.producers.length > 0 && (<><dt>Produced by</dt><dd><People names={data.producers} /></dd></>)}
             {data.related.map((r) => (
               <div key={r.label} className="songinfo-related">
                 <dt>{r.label}</dt>

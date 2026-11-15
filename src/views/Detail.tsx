@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { AboutSkeleton, AboutText, Chips, Credits, Facts, Links } from '../components/About';
+import { AboutSkeleton, AboutText, Chips, Credits, Facts, Links, RelatedChips } from '../components/About';
 import { ConcertCard } from '../components/Concerts';
 import { concerts, showsNear } from '../concerts/store';
 import { useStore } from '../lib/store';
@@ -128,7 +128,7 @@ export function AlbumView({ id }: { id: string }) {
         <section className="about">
           <h2>About this album</h2>
           {info.data.about && <AboutText summary={info.data.about} />}
-          <Facts items={info.data.facts} />
+          <Facts items={info.data.facts} label={info.data.label} />
           {info.data.credits.length > 0 && <h2 className="credits-head">Credits</h2>}
           <Credits groups={info.data.credits} />
           <Links links={info.data.links} />
@@ -171,7 +171,10 @@ export function ArtistView({ id }: { id: string }) {
         <section className="about">
           {info.data.bio && <AboutText summary={info.data.bio} />}
           <Facts items={info.data.facts} />
-          {!a.genres?.length && <Chips items={info.data.genres} />}
+          <Chips items={a.genres?.length ? a.genres.slice(0, 5) : info.data.genres} />
+          <RelatedChips title="Members" items={info.data.members} />
+          <RelatedChips title="Member of" items={info.data.memberOf} />
+          {info.data.mbid && <button className="link-quiet" onClick={() => go(`/person/${info.data && info.data.mbid}`)}>Everything {a.name} is credited on →</button>}
           <Links links={info.data.links} />
         </section>
       )}

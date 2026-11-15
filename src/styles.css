@@ -426,3 +426,35 @@ main:has(.tabplayer) { padding-bottom: 0; overflow: hidden; }
 .tab-speed button { padding: 0 11px; }
 .tab-controls { gap: 8px; }
 .tab-click { padding: 0 12px; }
+
+/* ---- Cross-links: people, labels, genres ---- */
+.credit-name { color: var(--text); text-align: left; text-decoration: underline; text-decoration-color: rgba(201, 182, 255, 0.45); text-underline-offset: 3px; }
+.credit-name:active { color: var(--accent); }
+.chip-tap { color: var(--text); }
+.chip-tap:active { background: #2c2c36; }
+.chip-person { height: auto; min-height: 34px; padding: 6px 14px; flex-direction: column; align-items: flex-start; text-transform: none; border-radius: 14px; }
+.chip-detail { font-size: 11px; color: var(--muted); }
+.related { display: flex; flex-direction: column; gap: 8px; }
+.person-head { justify-content: flex-start; align-items: flex-end; }
+.person-head .row-text { gap: 4px; }
+.person-open { align-self: flex-start; }
+.works { display: flex; flex-direction: column; margin-top: 6px; }
+.work { display: flex; align-items: center; gap: 10px; min-height: 50px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.work:active { opacity: 0.6; }
+.work .row-title { font-size: 15px; }
+.fineprint.flush { padding-left: 0; padding-right: 0; }
+.capitalize { text-transform: capitalize; }
+.people .credit-name { display: inline; }
+
+/* ---- Lyrics ---- */
+.lyrics { display: flex; flex-direction: column; gap: 8px; }
+.lyric-lines { display: flex; flex-direction: column; gap: 2px; max-height: 52vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 30px 0; scroll-behavior: smooth; }
+.lyric { display: block; width: 100%; text-align: left; padding: 7px 4px; font: 600 21px/1.3 var(--serif); color: rgba(242, 240, 234, 0.34); transition: color 0.25s; }
+.lyric-past { color: rgba(242, 240, 234, 0.55); }
+.lyric-now { color: var(--text); }
+.lyric-plain { font-weight: 400; font-size: 18px; color: #dcd9d1; padding: 3px 4px; -webkit-user-select: text; user-select: text; }
+@media (prefers-reduced-motion: reduce) { .lyric-lines { scroll-behavior: auto; } .lyric { transition: none; } }
+.now-bottom { gap: 8px; }
+.now-bottom .pill { padding: 0 13px; font-size: 13px; }
+.now-bottom .pill:first-child { flex: 1 1 auto; justify-content: flex-start; }
+.pill-icon { flex: none; padding: 0 12px !important; }
