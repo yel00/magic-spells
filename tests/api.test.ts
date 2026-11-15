@@ -67,3 +67,48 @@ describe('page-size caps', () => {
     expect(calls).toHaveLength(1);
   });
 });
+
+describe('playlist editing', () => {
+  it('moves an item within a list without losing or duplicating anything', async () => {
+    const { moveItem } = await import('../src/views/Detail');
+    expect(moveItem(['a', 'b', 'c', 'd'], 0, 2)).toEqual(['b', 'c', 'a', 'd']);
+    expect(moveItem(['a', 'b', 'c', 'd'], 3, 0)).toEqual(['d', 'a', 'b', 'c']);
+    expect(moveItem(['a', 'b'], 1, 1)).toEqual(['a', 'b']);
+    expect(moveItem(['a', 'b'], 0, 5)).toEqual(['a', 'b']);
+  });
+
+  it('tells Spotify the same move the screen shows, in both directions', async () => {
+    const { reorderParams } = await import('../src/spotify/api');
+    const { moveItem } = await import('../src/views/Detail');
+    // Apply Spotify's own rule to a list and compare with what the app displays.
+    const spotify = (list: string[], p: { range_start: number; insert_before: number }) => {
+      const next = list.slice();
+      const [item] = next.splice(p.range_start, 1);
+      next.splice(p.insert_before > p.range_start ? p.insert_before - 1 : p.insert_before, 0, item);
+      return next;
+    };
+    const list = ['a', 'b', 'c', 'd', 'e'];
+    for (const [from, to] of [[0, 1], [1, 0], [0, 4], [4, 0], [2, 3], [3, 2]]) {
+      expect(spotify(list, reorderParams(from, to))).toEqual(moveItem(list, from, to));
+    }
+  });
+
+  it('sends removals, renames and deletion in the shape Spotify now expects', async () => {
+    const sent: { method: string; path: string; body: unknown }[] = [];
+    vi.stubGlobal('fetch', async (input: URL | string, init?: RequestInit) => {
+      sent.push({ method: init?.method || 'GET', path: new URL(String(input)).pathname.replace('/v1', ''), body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    const api = await import('../src/spotify/api');
+    await api.removeFromPlaylist('p1', ['spotify:track:a']);
+    await api.updatePlaylist('p1', { name: 'New name', description: '' });
+    await api.movePlaylistItem('p1', 0, 2);
+    await api.deletePlaylist('spotify:playlist:p1');
+    expect(sent).toEqual([
+      { method: 'DELETE', path: '/playlists/p1/items', body: { items: [{ uri: 'spotify:track:a' }] } },
+      { method: 'PUT', path: '/playlists/p1', body: { name: 'New name', description: '' } },
+      { method: 'PUT', path: '/playlists/p1/items', body: { range_start: 0, insert_before: 3, range_length: 1 } },
+      { method: 'DELETE', path: '/me/library', body: { uris: ['spotify:playlist:p1'] } },
+    ]);
+  });
+});

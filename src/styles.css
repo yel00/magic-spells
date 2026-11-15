@@ -535,3 +535,10 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 .chip-count { margin-left: 8px; font-size: 11px; opacity: 0.6; }
 .tag-actions { padding: 4px var(--gutter) 8px; }
 .tag-browser .chip { text-transform: none; }
+
+/* ---- Playlist editing ---- */
+.playlist-edit label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.playlist-edit input { height: 46px; padding: 0 14px; border: 0; outline: 0; border-radius: 12px; background: var(--surface-2); color: var(--text); font: 16px var(--sans); -webkit-user-select: text; user-select: text; }
+.edit-row .row-main { cursor: default; }
+.edit-row .icon-btn { width: 40px; font-size: 13px; color: var(--muted); }
+.edit-row .edit-remove { color: #ffb4a2; }

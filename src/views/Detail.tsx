@@ -20,7 +20,7 @@ import { formatDuration, names, year } from '../lib/format';
 import { go } from '../lib/router';
 import { invalidate, useData } from '../lib/useData';
 import * as api from '../spotify/api';
-import type { Image } from '../spotify/types';
+import type { Image, PlaylistEntry } from '../spotify/types';
 import { commands } from '../state/player';
 import { toast, ui } from '../state/ui';
 
@@ -220,15 +220,113 @@ export function ArtistView({ id }: { id: string }) {
   );
 }
 
+/** Move one item of a list to a new position, returning a new list. */
+export function moveItem<T>(list: T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
+  const next = list.slice();
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
+
 export function PlaylistView({ id }: { id: string }) {
-  const { data: p, loading, error } = useData(`playlist:${id}`, () => api.playlist(id));
+  const { data: p, loading, error, reload } = useData(`playlist:${id}`, () => api.playlist(id));
+  const meData = useData('me', api.me);
   // Spotify only shares track lists for playlists the user owns or collaborates on.
-  const items = useData(p ? `playlist:${id}:items` : null, () => api.playlistItems(id).catch(() => null));
+  const [entries, setEntries] = useState<PlaylistEntry[] | null>(null);
+  const [next, setNext] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  const loadFirst = () =>
+    api.playlistItems(id).then(
+      (page) => {
+        setEntries(page.items);
+        setNext(page.next);
+      },
+      () => setEntries([]),
+    );
+  useEffect(() => {
+    setEntries(null);
+    setEditing(false);
+    loadFirst();
+    // Reload the list whenever a different playlist is opened.
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!p) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
-  const entries = items.data?.items ?? p.items?.items ?? p.tracks?.items ?? [];
-  const tracks = entries.map(api.entryTrack).filter((t): t is NonNullable<typeof t> => !!t && !!t.uri);
+  const mine = p.owner.id === meData.data?.id || !!p.collaborative;
+  const list = entries || [];
   const count = api.playlistCount(p);
-  const hidden = !items.loading && tracks.length === 0 && (count ?? 0) > 0;
+  const hidden = entries !== null && list.length === 0 && (count ?? 0) > 0;
+
+  const more = async () => {
+    if (!next) return;
+    setBusy(true);
+    try {
+      const page = await api.nextPage<PlaylistEntry>(next);
+      setEntries([...list, ...page.items]);
+      setNext(page.next);
+    } catch {
+      toast('Couldn’t load more tracks.');
+    }
+    setBusy(false);
+  };
+
+  // Each change shows at once, then is sent to Spotify; if Spotify refuses, the real list is reloaded.
+  const change = async (optimistic: PlaylistEntry[], send: () => Promise<unknown>) => {
+    setEntries(optimistic);
+    setBusy(true);
+    try {
+      await send();
+      invalidate('library:playlists');
+    } catch {
+      toast('Spotify didn’t accept that change.');
+      await loadFirst();
+    }
+    setBusy(false);
+  };
+  const move = (from: number, to: number) => change(moveItem(list, from, to), () => api.movePlaylistItem(id, from, to));
+  const remove = (index: number) => {
+    const uri = api.entryTrack(list[index])?.uri;
+    if (!uri) return;
+    // Spotify removes every copy of a track at once, so the list does too.
+    change(list.filter((e) => api.entryTrack(e)?.uri !== uri), () => api.removeFromPlaylist(id, [uri]));
+  };
+
+  const startEditing = () => {
+    setName(p.name);
+    setDescription(stripTags(p.description || ''));
+    setEditing(true);
+  };
+  const saveDetails = async () => {
+    const title = name.trim();
+    if (!title) return;
+    setBusy(true);
+    try {
+      await api.updatePlaylist(id, { name: title, description: description.trim() });
+      invalidate('library:playlists');
+      reload();
+      toast('Playlist updated');
+    } catch {
+      toast('Couldn’t update the playlist.');
+    }
+    setBusy(false);
+  };
+  const removePlaylist = async () => {
+    if (!window.confirm(`Delete “${p.name}”? This removes it from your Spotify library.`)) return;
+    try {
+      await api.deletePlaylist(p.uri);
+      invalidate('library:playlists');
+      toast('Playlist deleted');
+      go('/library');
+    } catch {
+      toast('Couldn’t delete the playlist.');
+    }
+  };
+  const detailsChanged = name.trim() !== p.name || description.trim() !== stripTags(p.description || '');
+
   return (
     <div className="page">
       <Hero
@@ -237,16 +335,51 @@ export function PlaylistView({ id }: { id: string }) {
         title={p.name}
         uri={p.uri}
         lines={[p.description ? stripTags(p.description) : null, [p.owner.display_name, count !== undefined && `${count} tracks`].filter(Boolean).join(' · ')]}
-      />
-      <Status loading={items.loading} />
+      >
+        {mine && <button className="btn" onClick={() => (editing ? setEditing(false) : startEditing())}>{editing ? 'Done' : 'Edit'}</button>}
+      </Hero>
+
+      {editing && (
+        <section className="about playlist-edit">
+          <label>Name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} /></label>
+          <label>Description<input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} placeholder="Optional" /></label>
+          <div className="note-actions">
+            <button className="btn btn-quiet btn-danger" onClick={removePlaylist}>Delete playlist</button>
+            <span className="spacer" />
+            <button className="btn btn-primary" onClick={saveDetails} disabled={busy || !name.trim() || !detailsChanged}>Save</button>
+          </div>
+          <p className="facts">Use the arrows to reorder and ✕ to remove. Changes are saved to Spotify as you make them.</p>
+        </section>
+      )}
+
+      <Status loading={entries === null} />
       {hidden && (
         <p className="status">
-          Spotify only shares the track list for playlists you own. You can still play this one — the queue shows what’s coming up.
+          {mine
+            ? 'This playlist is empty. Add songs from any track’s ··· menu.'
+            : 'Spotify only shares the track list for playlists you own. You can still play this one — the queue shows what’s coming up.'}
         </p>
       )}
       <div className="rows">
-        {tracks.map((t, i) => <TrackRow key={`${t.uri}-${i}`} track={t} onPlay={() => commands.playContext(p.uri, t.uri)} />)}
+        {list.map((entry, i) => {
+          const t = api.entryTrack(entry);
+          if (!t?.uri) return null;
+          return editing ? (
+            <div className="row edit-row" key={`${t.uri}-${i}`}>
+              <span className="row-main">
+                <Art images={t.album?.images} size={44} />
+                <span className="row-text"><span className="row-title">{t.name}</span><span className="row-sub">{names(t.artists)}</span></span>
+              </span>
+              <button className="icon-btn" disabled={busy || i === 0} onClick={() => move(i, i - 1)} aria-label={`Move ${t.name} up`}>▲</button>
+              <button className="icon-btn" disabled={busy || i === list.length - 1} onClick={() => move(i, i + 1)} aria-label={`Move ${t.name} down`}>▼</button>
+              <button className="icon-btn edit-remove" disabled={busy} onClick={() => remove(i)} aria-label={`Remove ${t.name}`}>✕</button>
+            </div>
+          ) : (
+            <TrackRow key={`${t.uri}-${i}`} track={t} onPlay={() => commands.playContext(p.uri, t.uri)} />
+          );
+        })}
       </div>
+      {next && <button className="btn btn-quiet more" onClick={more} disabled={busy}>{busy ? 'Loading…' : 'Show more'}</button>}
     </div>
   );
 }

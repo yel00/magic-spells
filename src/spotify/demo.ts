@@ -216,7 +216,13 @@ export async function demoRequest(method: string, url: URL, body: any): Promise<
   if (path === '/me/top/tracks') return page(tracks.filter((_, i) => i % 13 === 1).slice(0, 10));
   if (path === '/me/library/contains') return (q.get('uris') || '').split(',').map((u) => saved.has(u));
   if (path === '/me/library') {
-    (body.uris as string[]).forEach((u) => (method === 'PUT' ? saved.add(u) : saved.delete(u)));
+    (body.uris as string[]).forEach((u) => {
+      if (method === 'PUT') return void saved.add(u);
+      saved.delete(u);
+      // Removing a playlist from the library is how a playlist is deleted.
+      const at = playlists.findIndex((x) => x.uri === u);
+      if (at >= 0) playlists.splice(at, 1);
+    });
     return null;
   }
 
@@ -231,6 +237,26 @@ export async function demoRequest(method: string, url: URL, body: any): Promise<
     return { items: all.slice(offset, offset + limit), next: offset + limit < all.length ? 'more' : null, total: all.length };
   }
   if (seg[0] === 'artists') return artists.find((a) => a.id === seg[1]) ?? notFound();
+  if (seg[0] === 'playlists' && seg[2] === 'items' && (method === 'PUT' || method === 'DELETE')) {
+    const p = playlists.find((x) => x.id === seg[1]);
+    if (!p || p.owner.id !== 'demo') throw new ApiError(403, 'Forbidden');
+    if (method === 'DELETE') {
+      const gone = new Set((body.items as { uri: string }[]).map((i) => i.uri));
+      p.list = p.list.filter((t) => !gone.has(t.uri));
+    } else {
+      // Same rule as Spotify: insert_before counts positions before the move.
+      const [item] = p.list.splice(body.range_start, 1);
+      p.list.splice(body.insert_before > body.range_start ? body.insert_before - 1 : body.insert_before, 0, item);
+    }
+    return { snapshot_id: 'demo' };
+  }
+  if (seg[0] === 'playlists' && !seg[2] && method === 'PUT') {
+    const p = playlists.find((x) => x.id === seg[1]);
+    if (!p || p.owner.id !== 'demo') throw new ApiError(403, 'Forbidden');
+    if (typeof body.name === 'string') p.name = body.name;
+    if (typeof body.description === 'string') p.description = body.description;
+    return null;
+  }
   if (seg[0] === 'playlists' && seg[2] === 'items' && method === 'POST') {
     const p = playlists.find((x) => x.id === seg[1]);
     (body.uris as string[]).forEach((u) => { const t = tracks.find((x) => x.uri === u); if (p && t) p.list.push(t); });

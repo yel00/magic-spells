@@ -18,7 +18,9 @@ remote, so nothing here streams or stores music.
 - Library: playlists, albums, artists, liked songs
 - Search across Spotify
 - Album, artist and playlist pages; save albums, follow artists, like songs
-- Playlists: create one and add tracks from anywhere
+- Playlists: create one and add tracks from anywhere; on playlists you own,
+  rename, edit the description, reorder and remove tracks, or delete the
+  playlist. Long playlists load 50 tracks at a time
 - Artist pages: biography (Wikipedia), where and when they started, genres,
   and links to their site, Bandcamp, Discogs, Setlist.fm and more (MusicBrainz)
 - Album pages: the album's story (Wikipedia), label and catalogue number, and

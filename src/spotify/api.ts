@@ -222,6 +222,23 @@ export const createPlaylist = (name: string, description = '') =>
 export const addToPlaylist = (id: string, uris: string[]) =>
   request<unknown>('POST', `/playlists/${id}/items`, { body: { uris } });
 
+export const updatePlaylist = (id: string, details: { name?: string; description?: string }) =>
+  request<null>('PUT', `/playlists/${id}`, { body: details });
+
+/** Removes every occurrence of these tracks from the playlist. */
+export const removeFromPlaylist = (id: string, uris: string[]) =>
+  request<unknown>('DELETE', `/playlists/${id}/items`, { body: { items: uris.map((uri) => ({ uri })) } });
+
+/** Spotify's "insert before" counts positions as they are before the move, so moving down needs one more. */
+export const reorderParams = (from: number, to: number) => ({ range_start: from, insert_before: to > from ? to + 1 : to, range_length: 1 });
+
+/** Move the track at position `from` so that it ends up at position `to` (both counted from 0). */
+export const movePlaylistItem = (id: string, from: number, to: number) =>
+  request<unknown>('PUT', `/playlists/${id}/items`, { body: reorderParams(from, to) });
+
+/** Spotify has no "delete": removing a playlist from your library is how one is deleted. */
+export const deletePlaylist = (uri: string) => removeFromLibrary([uri]);
+
 export function entryTrack(e: PlaylistEntry): Track | null {
   return e.item ?? e.track ?? null;
 }
