@@ -5,15 +5,21 @@ import { useStore } from '../lib/store';
 import { useData } from '../lib/useData';
 import { notes, STATUS_TEXT } from '../notes/store';
 import * as api from '../spotify/api';
-import { beginLogin, getClientId, isDemo, redirectUri, setClientId, setDemo, signOut } from '../spotify/auth';
+import { beginLogin, builtInClientId, cleanClientId, getClientId, isDemo, redirectUri, setClientId, setDemo, signOut } from '../spotify/auth';
 
 export function Welcome({ error }: { error: string | null }) {
   const [id, setId] = useState(getClientId());
   const [message, setMessage] = useState(error);
-  const fromBuild = !!import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+  const fromBuild = !!builtInClientId();
+  const badBuildValue = !fromBuild && !!import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+  const valid = fromBuild || !!cleanClientId(id);
 
   const connect = async () => {
     try {
+      if (!valid) {
+        setMessage('That doesn’t look like a Spotify client ID. It is 32 letters and digits, shown as “Client ID” in your Spotify app’s settings (not the client secret).');
+        return;
+      }
       if (!fromBuild) setClientId(id);
       await beginLogin();
     } catch (e) {
@@ -31,6 +37,7 @@ export function Welcome({ error }: { error: string | null }) {
         <div className="setup">
           <label htmlFor="cid">Spotify client ID</label>
           <input id="cid" value={id} onChange={(e) => setId(e.target.value)} placeholder="32-character ID from developer.spotify.com" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+          {badBuildValue && <p className="error">The client ID saved in the site’s settings isn’t valid, so it’s being ignored. Paste the right one here.</p>}
           <p className="fineprint">
             In your Spotify developer app, add this exact redirect URI:<br />
             <code>{redirectUri()}</code>
@@ -39,7 +46,7 @@ export function Welcome({ error }: { error: string | null }) {
       )}
 
       {message && <p className="error" role="alert">{message}</p>}
-      <button className="btn btn-primary btn-wide" onClick={connect} disabled={!fromBuild && id.trim().length < 20}>Connect Spotify</button>
+      <button className="btn btn-primary btn-wide" onClick={connect} disabled={!fromBuild && !id.trim()}>Connect Spotify</button>
       <button className="btn btn-quiet btn-wide" onClick={() => { setDemo(true); window.location.reload(); }}>Look around with demo music</button>
     </div>
   );

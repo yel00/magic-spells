@@ -48,12 +48,28 @@ function write(key: string, value: unknown) {
   }
 }
 
+/**
+ * Pull the client ID out of whatever was pasted. Spotify client IDs are exactly
+ * 32 letters and digits; a value with quotes, spaces or a label around it makes
+ * Spotify answer "client_id: Invalid".
+ */
+export function cleanClientId(raw: string | undefined | null): string {
+  const text = String(raw ?? '').trim();
+  if (/^[0-9a-z]{32}$/i.test(text)) return text;
+  return /(?<![0-9a-z])[0-9a-z]{32}(?![0-9a-z])/i.exec(text)?.[0] ?? '';
+}
+
+/** The client ID baked in at build time, if one was set and is well formed. */
+export function builtInClientId(): string {
+  return cleanClientId(import.meta.env.VITE_SPOTIFY_CLIENT_ID as string | undefined);
+}
+
 export function getClientId(): string {
-  return (import.meta.env.VITE_SPOTIFY_CLIENT_ID as string | undefined) || read<string>(KEY.clientId) || '';
+  return builtInClientId() || cleanClientId(read<string>(KEY.clientId));
 }
 
 export function setClientId(id: string) {
-  write(KEY.clientId, id.trim() || null);
+  write(KEY.clientId, cleanClientId(id) || null);
 }
 
 export function redirectUri(): string {

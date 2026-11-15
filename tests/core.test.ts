@@ -57,3 +57,23 @@ describe('playlist shapes', () => {
     expect(playlistCount({ ...base, tracks: { total: 4 } })).toBe(4);
   });
 });
+
+describe('client ID cleaning', () => {
+  const id = '0123456789abcdef0123456789ABCDEF';
+  it('accepts a clean ID and rescues one pasted with clutter', async () => {
+    const { cleanClientId } = await import('../src/spotify/auth');
+    expect(cleanClientId(id)).toBe(id);
+    expect(cleanClientId(`  ${id}\n`)).toBe(id);
+    expect(cleanClientId(`"${id}"`)).toBe(id);
+    expect(cleanClientId(`Client ID: ${id}`)).toBe(id);
+    expect(cleanClientId(`VITE_SPOTIFY_CLIENT_ID=${id}`)).toBe(id);
+  });
+  it('rejects anything that is not 32 letters and digits', async () => {
+    const { cleanClientId } = await import('../src/spotify/auth');
+    expect(cleanClientId('')).toBe('');
+    expect(cleanClientId(undefined)).toBe('');
+    expect(cleanClientId(id.slice(0, 31))).toBe('');
+    expect(cleanClientId(id + 'ab')).toBe('');
+    expect(cleanClientId('my-spotify-app')).toBe('');
+  });
+});
