@@ -56,9 +56,10 @@ remote, so nothing here streams or stores music.
   the same way. Record labels and genres are tappable and open everything
   Spotify files under them
 - Versions: an artist's remasters and deluxe editions are folded into one
-  entry per album, with a Versions list on the album page. "Find other
-  recordings of this song" lists covers and the artist's live or alternate
-  takes, and plays one if Spotify has it
+  entry per album, with a Versions list on the album page. "Find every
+  version of this song" lists the artist's other takes and covers that
+  Spotify has (playable in one tap), then other artists known to have
+  recorded it, with "Load more" for heavily covered songs
 - Reception on album pages: review scores (the publications' own ratings, and
   Metacritic where recorded) and Wikipedia's account of the reviews, plus
   links to AllMusic, Pitchfork and similar pages where MusicBrainz has them
@@ -195,9 +196,14 @@ need a scheduled server job and are not built yet.
 - **Editions** are grouped by title once edition wording is removed ("Deluxe
   Edition", "2011 Remaster"). The plain edition is shown; if there isn't one,
   the earliest. A single is never merged into an album of the same name.
-- **Other recordings** come from MusicBrainz, which links each recording to
-  the composition it performs. Up to 300 recordings are read, so for songs
-  with thousands of covers the list is a sample, not complete.
+- **Versions of a song** combine two sources. Spotify is searched by title,
+  which shows what can be played now but can't tell two different songs with
+  the same name apart. MusicBrainz links each recording to the composition it
+  performs, which says who has really recorded this song. Spotify results by
+  artists MusicBrainz confirms are listed as covers; the rest are listed
+  separately as "same title — may be a different song". Each "Load more"
+  reads 30 more Spotify results and 300 more MusicBrainz recordings, up to
+  1,000.
 - **Reviews** are read from the album's Wikipedia article: the scores table,
   which Wikipedia stores as structured data, and the first paragraphs of the
   reception section. This is Wikipedia's summary of the reviews, not the

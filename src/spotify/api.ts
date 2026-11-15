@@ -162,6 +162,10 @@ export const searchAlbums = (title: string, artist: string) =>
 export const searchTrack = (title: string, artist: string) =>
   get<SearchResult>('/search', { q: `track:"${title.replace(/"/g, '')}" artist:"${artist.replace(/"/g, '')}"`, type: 'track', limit: 5 });
 
+/** Tracks with this title by anyone, ten at a time, roughly most popular first. */
+export const searchByTitle = (title: string, offset: number) =>
+  get<SearchResult>('/search', { q: `track:"${title.replace(/"/g, '')}"`, type: 'track', limit: 10, offset });
+
 /** Everything under a record label (albums) or a genre (artists), ten at a time. */
 export const browse = (kind: 'label' | 'genre', name: string, offset: number) =>
   get<SearchResult>('/search', { q: `${kind}:"${name.replace(/"/g, '')}"`, type: kind === 'label' ? 'album' : 'artist', limit: 10, offset });

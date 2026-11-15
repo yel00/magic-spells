@@ -247,8 +247,9 @@ export async function demoRequest(method: string, url: URL, body: any): Promise<
       return { artists: { ...page(list.slice(offset, offset + 10)), total: list.length } };
     }
     if (field('track')) {
-      const list = tracks.filter((t) => t.name.toLowerCase() === field('track') && t.artists[0].name.toLowerCase() === field('artist'));
-      return { tracks: page(list.slice(0, 5)) };
+      const list = tracks.filter((t) => t.name.toLowerCase() === field('track') && (!field('artist') || t.artists[0].name.toLowerCase() === field('artist')));
+      const size = Number(q.get('limit')) || 5;
+      return { tracks: { ...page(list.slice(offset, offset + size)), next: offset + size < list.length ? 'more' : null } };
     }
     if (field('album')) {
       const list = albums.filter((a) => a.name.toLowerCase() === field('album') && (!field('artist') || a.artists[0].name.toLowerCase() === field('artist')));

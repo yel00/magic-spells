@@ -106,11 +106,15 @@ describe('live lyrics', () => {
 
 describe('live versions and reviews', () => {
   it('finds other recordings of a much-covered song', async () => {
-    const { otherRecordings } = await import('../src/enrich/recordings');
-    const r = await otherRecordings({ name: 'Hallelujah', artist: 'Leonard Cohen' });
-    console.log('covers:', r?.byOthers.length, r?.byOthers.slice(0, 8).map((x) => `${x.artist} ${x.year || ''}`).join(' | '));
-    console.log('own takes:', r?.bySameArtist.slice(0, 5).map((x) => `${x.title} ${x.note || ''} ${x.year || ''}`).join(' | '));
-    expect(r?.byOthers.length).toBeGreaterThan(5);
+    const { findWork, workPage, sortRecordings } = await import('../src/enrich/recordings');
+    const work = await findWork({ name: 'Hallelujah', artist: 'Leonard Cohen' });
+    console.log('work:', work?.id, 'total recordings', work?.total, 'first page', work?.first.length);
+    expect(work?.total).toBeGreaterThan(100);
+    const second = await workPage(work!.id, 1);
+    const r = sortRecordings([...work!.first, ...second], 'Hallelujah', 'Leonard Cohen');
+    console.log('covers after 2 pages:', r.byOthers.length, r.byOthers.slice(0, 8).map((x) => `${x.artist} ${x.year || ''}`).join(' | '));
+    expect(second.length).toBeGreaterThan(50);
+    expect(r.byOthers.length).toBeGreaterThan(20);
   }, 120_000);
 
   it('reads an album’s reception from Wikipedia', async () => {

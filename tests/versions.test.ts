@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { sortRecordings } from '../src/enrich/recordings';
+import { slim, sortRecordings, type Recording } from '../src/enrich/recordings';
 import { editionLabel, groupEditions, otherEditions } from '../src/spotify/editions';
-import type { AlbumRef } from '../src/spotify/types';
+import type { AlbumRef, Track } from '../src/spotify/types';
+import { classify } from '../src/spotify/versions';
 
 const album = (id: string, name: string, date: string, type = 'album'): AlbumRef => ({ id, name, uri: `spotify:album:${id}`, images: [], artists: [], release_date: date, album_type: type });
 
@@ -47,7 +48,7 @@ describe('album editions', () => {
 
 describe('other recordings of a song', () => {
   const rec = (title: string, artist: string, year = '', disambiguation = '') => ({ title, disambiguation, 'first-release-date': year, 'artist-credit': [{ name: artist, artist: { name: artist } }] });
-  const sorted = sortRecordings([
+  const raw = [
     rec('Hallelujah', 'Leonard Cohen', '1984'),
     rec('Hallelujah', 'Leonard Cohen', '1994', 'live'),
     rec('Hallelujah', 'Leonard Cohen', '2009', 'live'),
@@ -55,15 +56,45 @@ describe('other recordings of a song', () => {
     rec('Hallelujah', 'Jeff Buckley', '2007', 'live'),
     rec('Hallelujah', 'John Cale', '1991'),
     rec('Hallelujah', '', '2000'),
-  ], 'Hallelujah', 'Leonard Cohen');
+  ];
+  const recordings = raw.map(slim).filter((r): r is Recording => !!r);
+  const sorted = sortRecordings(recordings, 'Hallelujah', 'Leonard Cohen');
 
+  it('reduces MusicBrainz records and drops ones with no artist', () => {
+    expect(recordings).toHaveLength(6);
+    expect(slim({ title: 'Duet', 'artist-credit': [{ name: 'A', joinphrase: ' feat. ', artist: { name: 'Artist A' } }, { name: 'B', artist: { name: 'B' } }] })).toEqual({ title: 'Duet', artist: 'A feat. B', artists: ['Artist A', 'B'], year: undefined, note: undefined });
+  });
   it('lists each covering artist once, earliest recording first', () => {
-    expect(sorted.byOthers).toEqual([
-      { title: 'Hallelujah', artist: 'John Cale', year: '1991', note: undefined },
-      { title: 'Hallelujah', artist: 'Jeff Buckley', year: '1994', note: undefined },
-    ]);
+    expect(sorted.byOthers.map((r) => [r.artist, r.year])).toEqual([['John Cale', '1991'], ['Jeff Buckley', '1994']]);
   });
   it('lists the original artist’s other takes but not the track itself', () => {
-    expect(sorted.bySameArtist).toEqual([{ title: 'Hallelujah', artist: 'Leonard Cohen', year: '1994', note: 'live' }]);
+    expect(sorted.bySameArtist.map((r) => [r.note, r.year])).toEqual([['live', '1994']]);
+  });
+});
+
+describe('versions on Spotify', () => {
+  const track = (id: string, name: string, artist: string, album = 'Album'): Track => ({ id, name, uri: `spotify:track:${id}`, duration_ms: 1, artists: [{ id: artist, name: artist, uri: '' }], album: { id: album, name: album, uri: '', images: [], artists: [] } });
+  const song = { name: 'Hallelujah', artist: 'Leonard Cohen', uri: 'spotify:track:orig' };
+  const results = [
+    track('orig', 'Hallelujah', 'Leonard Cohen'),
+    track('comp', 'Hallelujah', 'Leonard Cohen', 'Greatest Hits'),
+    track('live', 'Hallelujah - Live in London', 'Leonard Cohen'),
+    track('live2', 'Hallelujah - Live in London', 'Leonard Cohen', 'Another Compilation'),
+    track('jb', 'Hallelujah', 'Jeff Buckley'),
+    track('jb2', 'Hallelujah', 'Jeff Buckley', 'Best Of'),
+    track('pm', 'Hallelujah', 'Paramore'),
+    track('jc', 'Hallelujah', 'John Cale'),
+  ];
+  const out = classify(results, song, new Set(['jeff buckley', 'john cale']));
+
+  it('keeps the artist’s genuinely different takes, not the same recording on a compilation', () => {
+    expect(out.sameArtist.map((t) => t.id)).toEqual(['live']);
+  });
+  it('separates confirmed covers from songs that merely share the title', () => {
+    expect(out.covers.map((t) => t.id)).toEqual(['jb', 'jc']);
+    expect(out.unconfirmed.map((t) => t.id)).toEqual(['pm']);
+  });
+  it('treats everything by other artists as unconfirmed when nothing is known about covers', () => {
+    expect(classify(results, song, new Set()).unconfirmed.map((t) => t.id)).toEqual(['jb', 'pm', 'jc']);
   });
 });
