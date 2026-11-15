@@ -78,6 +78,21 @@ export async function request<T>(method: string, path: string, opts: Options = {
 
 const get = <T>(path: string, query?: Query) => request<T>('GET', path, { query });
 
+/**
+ * A list request that survives Spotify lowering a page-size cap. Spotify has
+ * been cutting the maximum `limit` on endpoints for personal apps (search and
+ * artist albums are already down to 10) and rejects anything larger outright,
+ * so if a bigger page is refused, ask again for 10. Paging still reaches the rest.
+ */
+async function getList<T>(path: string, query: Query): Promise<T> {
+  try {
+    return await get<T>(path, query);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 400 && /limit/i.test(e.message) && Number(query.limit) > 10) return get<T>(path, { ...query, limit: 10 });
+    throw e;
+  }
+}
+
 /** Fetch the next page of any list Spotify returned. */
 export const nextPage = <T>(url: string) => get<Paging<T>>(url);
 
@@ -121,18 +136,18 @@ export const setRepeat = (mode: 'off' | 'track' | 'context') =>
   request<null>('PUT', '/me/player/repeat', { query: { state: mode } });
 export const getQueue = () => get<Queue>('/me/player/queue');
 export const addToQueue = (uri: string) => request<null>('POST', '/me/player/queue', { query: { uri } });
-export const recentlyPlayed = () => get<Paging<PlayHistory>>('/me/player/recently-played', { limit: 50 });
+export const recentlyPlayed = () => getList<Paging<PlayHistory>>('/me/player/recently-played', { limit: 50 });
 
 // ---- Library ----------------------------------------------------------------
 
 export const me = () => get<Me>('/me');
-export const myPlaylists = () => get<Paging<Playlist>>('/me/playlists', { limit: 50 });
-export const savedAlbums = () => get<Paging<{ album: AlbumRef }>>('/me/albums', { limit: 50 });
-export const savedTracks = () => get<Paging<{ track: Track }>>('/me/tracks', { limit: 50 });
+export const myPlaylists = () => getList<Paging<Playlist>>('/me/playlists', { limit: 50 });
+export const savedAlbums = () => getList<Paging<{ album: AlbumRef }>>('/me/albums', { limit: 50 });
+export const savedTracks = () => getList<Paging<{ track: Track }>>('/me/tracks', { limit: 50 });
 export const followedArtists = () =>
-  get<{ artists: Paging<Artist> }>('/me/following', { type: 'artist', limit: 50 }).then((r) => r.artists);
-export const topArtists = () => get<Paging<Artist>>('/me/top/artists', { limit: 20, time_range: 'medium_term' });
-export const topTracks = () => get<Paging<Track>>('/me/top/tracks', { limit: 20, time_range: 'short_term' });
+  getList<{ artists: Paging<Artist> }>('/me/following', { type: 'artist', limit: 50 }).then((r) => r.artists);
+export const topArtists = () => getList<Paging<Artist>>('/me/top/artists', { limit: 20, time_range: 'medium_term' });
+export const topTracks = () => getList<Paging<Track>>('/me/top/tracks', { limit: 20, time_range: 'short_term' });
 
 export const saveToLibrary = (uris: string[]) => request<null>('PUT', '/me/library', { body: { uris } });
 export const removeFromLibrary = (uris: string[]) => request<null>('DELETE', '/me/library', { body: { uris } });
@@ -143,8 +158,36 @@ export const libraryContains = (uris: string[]) =>
 
 export const album = (id: string) => get<Album>(`/albums/${id}`);
 export const artist = (id: string) => get<Artist>(`/artists/${id}`);
-export const artistAlbums = (id: string) =>
-  get<Paging<AlbumRef>>(`/artists/${id}/albums`, { include_groups: 'album,single', limit: 50 });
+/** Spotify returns an artist's releases ten at a time. */
+const ALBUM_PAGE = 10;
+
+async function releases(id: string, group: 'album' | 'single', pages: number): Promise<{ items: AlbumRef[]; more: boolean }> {
+  const first = await get<Paging<AlbumRef>>(`/artists/${id}/albums`, { include_groups: group, limit: ALBUM_PAGE, offset: 0 });
+  const total = first.total ?? first.items.length;
+  const wanted = Math.min(pages, Math.ceil(total / ALBUM_PAGE));
+  // The first page says how many there are; fetch the rest side by side.
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(0, wanted - 1) }, (_, i) =>
+      get<Paging<AlbumRef>>(`/artists/${id}/albums`, { include_groups: group, limit: ALBUM_PAGE, offset: (i + 1) * ALBUM_PAGE }).catch(() => null),
+    ),
+  );
+  const items = [first, ...rest].flatMap((p) => p?.items || []).filter(Boolean);
+  return { items, more: total > wanted * ALBUM_PAGE };
+}
+
+/**
+ * An artist's albums (up to 40) and singles & EPs (up to 20). They are asked
+ * for separately so a long run of singles can't crowd the albums out.
+ */
+export async function artistAlbums(id: string): Promise<Paging<AlbumRef>> {
+  const [albums, singles] = await Promise.all([
+    releases(id, 'album', 4),
+    releases(id, 'single', 2).catch(() => ({ items: [] as AlbumRef[], more: false })),
+  ]);
+  const seen = new Set<string>();
+  const items = [...albums.items, ...singles.items].filter((a) => (seen.has(a.id) ? false : (seen.add(a.id), true)));
+  return { items, next: null, total: items.length };
+}
 export const playlist = (id: string) => get<Playlist>(`/playlists/${id}`);
 export const playlistItems = (id: string) => get<Paging<PlaylistEntry>>(`/playlists/${id}/items`, { limit: 50 });
 

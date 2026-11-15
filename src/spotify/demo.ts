@@ -221,7 +221,15 @@ export async function demoRequest(method: string, url: URL, body: any): Promise<
   }
 
   if (seg[0] === 'albums') return albums.find((a) => a.id === seg[1]) ?? notFound();
-  if (seg[0] === 'artists' && seg[2] === 'albums') return page(albums.filter((a) => a.artists[0].id === seg[1]).map(({ tracks: _t, ...ref }) => ref));
+  if (seg[0] === 'artists' && seg[2] === 'albums') {
+    // Behaves like the real endpoint: filtered by group, ten at most per page.
+    const groups = (q.get('include_groups') || 'album,single').split(',');
+    const limit = Number(q.get('limit')) || 5;
+    if (limit > 10) throw new ApiError(400, 'Invalid limit');
+    const offset = Number(q.get('offset')) || 0;
+    const all = albums.filter((a) => a.artists[0].id === seg[1] && groups.includes(a.album_type || 'album')).map(({ tracks: _t, ...ref }) => ref);
+    return { items: all.slice(offset, offset + limit), next: offset + limit < all.length ? 'more' : null, total: all.length };
+  }
   if (seg[0] === 'artists') return artists.find((a) => a.id === seg[1]) ?? notFound();
   if (seg[0] === 'playlists' && seg[2] === 'items' && method === 'POST') {
     const p = playlists.find((x) => x.id === seg[1]);
