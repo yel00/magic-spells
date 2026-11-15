@@ -1,4 +1,7 @@
 import { SimilarShelf } from '../components/Discover';
+import { concerts, newCount } from '../concerts/store';
+import { go } from '../lib/router';
+import { useStore } from '../lib/store';
 import { Status } from '../components/Shelf';
 import { norm } from '../enrich/text';
 import { useData } from '../lib/useData';
@@ -10,12 +13,29 @@ export function DiscoverView() {
   const followed = useData('library:artists', api.followedArtists);
   const seeds = (top.data?.items || []).slice(0, 4).map((a) => a.name);
   const waiting = top.loading || followed.loading;
+  const gigs = useStore(concerts);
+  const fresh = newCount(gigs);
   // "New to you" means: not among your most played and not someone you follow.
   const known = new Set([...(top.data?.items || []), ...(followed.data?.items || [])].map((a) => norm(a.name)));
 
   return (
     <div className="page">
       <header className="page-head"><h1>Discover</h1></header>
+      <button className="concert-teaser" onClick={() => go('/concerts')}>
+        <span className="row-text">
+          <span className="row-title">Concerts near you{fresh > 0 && <span className="new-dot" />}</span>
+          <span className="row-sub">
+            {!gigs.place
+              ? 'Choose your area to see when your artists are playing nearby'
+              : gigs.status === 'scanning'
+                ? 'Checking your artists…'
+                : gigs.concerts.length
+                  ? `${gigs.concerts.length} upcoming near ${gigs.place.name}${fresh ? ` · ${fresh} new` : ''}`
+                  : `Nothing listed near ${gigs.place.name} right now`}
+          </span>
+        </span>
+        <span className="concert-go">Open</span>
+      </button>
       <Status loading={waiting} error={top.error} />
       {!waiting && seeds.length === 0 && (
         <p className="status">Play some music first — suggestions here are built from the artists you listen to most.</p>

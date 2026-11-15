@@ -8,7 +8,7 @@ Spotify leaves out — credits, biographies, lyrics notes, live versions, concer
 It is an installable web app. Spotify itself plays the audio; this app is the
 remote, so nothing here streams or stores music.
 
-## What works today (phases 1–4)
+## What works today (phases 1–5)
 
 - Sign in with Spotify (no server, no secret — PKCE)
 - Now playing: artwork, seek, play/pause/skip, shuffle, repeat, volume
@@ -35,6 +35,10 @@ remote, so nothing here streams or stores music.
   can be played straight away or saved as a Spotify playlist
 - Live versions: YouTube performances on artist pages and in "About this song",
   playing inside the app (Spotify pauses while a video plays)
+- Concerts: choose a city (or use your location) and a distance; the app checks
+  whether artists you follow or play a lot have shows nearby, lists them by
+  date with ticket links, re-checks once a day when opened, and flags shows
+  that are new since you last looked. Artist pages show their nearby dates
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
 - Demo mode with invented music, for looking around without an account
 
@@ -67,7 +71,11 @@ remote, so nothing here streams or stores music.
    API v3", create an API key, and add it in Vercel as `YOUTUBE_API_KEY`. The
    free allowance is about 100 searches a day; results are cached for a week.
    Without it, the app shows a link that opens the same search on YouTube.
-9. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
+9. **Concerts (optional)**: create a free key at
+   <https://developer.ticketmaster.com> and add it in Vercel as
+   `TICKETMASTER_API_KEY`. Then open Discover → Concerts near you and pick
+   your area.
+10. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
 
 ## Develop
 
@@ -97,7 +105,7 @@ npm run build      # typecheck + production build
 2. ~~Rich artist and album pages: Wikipedia, MusicBrainz credits, Genius~~
 3. ~~Listening notes, synced between devices~~
 4. ~~Discovery (Last.fm / ListenBrainz) and YouTube live versions~~
-5. Concert scanner with notifications
+5. ~~Concert scanner~~ (push notifications for new shows still to do)
 6. Musician tools: BPM/key lookup, microphone analyzer, tab search and player
 7. Later: Beatport (needs partner access), native shell for TestFlight, NAS files
 
@@ -127,6 +135,20 @@ new apps, so:
   artists, threads three of the seed artist's own through it, and never plays
   the same artist twice in a row. Building one takes a few seconds the first
   time (around fifteen Spotify searches, three at a time) and is cached after.
+
+## How the concert scanner works
+
+It builds a watch list (artists you follow, then your most played, up to 200)
+and asks Ticketmaster about each one near your chosen place, three at a time.
+A show only counts if the artist is actually on the bill, which filters out
+tribute acts. A festival with several of your artists appears once, listing
+all of them. Answers are cached for a day, so reopening the app costs nothing.
+Your location is rounded to about a kilometre before it leaves the device and
+is not stored on the server. Distances are in miles.
+
+It scans when the app is opened, not in the background: a show announced today
+appears the next time you open the app. Background push notifications would
+need a scheduled server job and are not built yet.
 
 ## How notes sync
 

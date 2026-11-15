@@ -1,5 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { AboutSkeleton, AboutText, Chips, Credits, Facts, Links } from '../components/About';
+import { ConcertCard } from '../components/Concerts';
+import { concerts, showsNear } from '../concerts/store';
+import { useStore } from '../lib/store';
 import { Art, pickImage } from '../components/Art';
 import { ChevronLeft, HeartIcon, PlayIcon, ShuffleIcon } from '../components/Icons';
 import { SimilarShelf, Videos } from '../components/Discover';
@@ -140,6 +143,8 @@ export function ArtistView({ id }: { id: string }) {
   const { data: a, loading, error } = useData(`artist:${id}`, () => api.artist(id));
   const disc = useData(`artist:${id}:albums`, () => api.artistAlbums(id));
   const info = useData(a ? `info:artist:${id}` : null, () => artistInfo(a!.name).then((v) => v ?? false));
+  const place = useStore(concerts).place;
+  const shows = useData(a && place ? `shows:${id}:${place.lat},${place.lon},${place.radius}` : null, () => showsNear(a!.name).then((v) => v ?? []));
   const popular = useData(a ? `popular:${id}` : null, () => popularTracks(a!.name).then((v) => v ?? []));
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
   const all = disc.data?.items || [];
@@ -180,6 +185,14 @@ export function ArtistView({ id }: { id: string }) {
         <Shelf title="Singles & EPs">
           {singles.map((x) => <Card key={x.id} title={x.name} subtitle={year(x.release_date)} images={x.images} to={`/album/${x.id}`} />)}
         </Shelf>
+      )}
+      {!!shows.data?.length && (
+        <section className="about">
+          <h2>Playing near {place?.name}</h2>
+          <div className="concert-list concert-list-flush">
+            {shows.data.map((c) => <ConcertCard key={c.id} concert={c} showArtist={false} />)}
+          </div>
+        </section>
       )}
       <SimilarShelf name={a.name} title="Similar artists" />
       <Videos query={`${a.name} live`} title="Live" />

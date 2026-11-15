@@ -10,12 +10,14 @@ import { Sheet } from './components/Sheet';
 import { SongInfoSheet } from './components/SongInfoSheet';
 import { TrackActions } from './components/TrackActions';
 import { go, useRoute } from './lib/router';
+import { concerts, newCount, scan as scanConcerts } from './concerts/store';
 import { useStore } from './lib/store';
 import { useData } from './lib/useData';
 import { openNotes } from './notes/store';
 import * as api from './spotify/api';
 import { startPolling, stopPolling } from './state/player';
 import { openSheet, ui } from './state/ui';
+import { ConcertsView } from './views/ConcertsView';
 import { AlbumView, ArtistView, PlaylistView } from './views/Detail';
 import { DiscoverView } from './views/DiscoverView';
 import { Home } from './views/Home';
@@ -39,6 +41,7 @@ export function App() {
   const { sheet, actionsFor, infoFor, noteDraft, mix, video, toast } = useStore(ui);
   const me = useData('me', api.me);
   const userId = me.data?.id;
+  const fresh = newCount(useStore(concerts));
   const main = useRef<HTMLElement>(null);
   const key = `${route.name}/${route.id || ''}`;
 
@@ -48,7 +51,10 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (userId) openNotes(userId);
+    if (!userId) return;
+    openNotes(userId);
+    // Quietly re-check for concerts, at most once a day.
+    scanConcerts();
   }, [userId]);
 
   // Each page keeps its own scroll position, so going back lands where you were.
@@ -66,10 +72,11 @@ export function App() {
   else if (route.name === 'search') view = <Search />;
   else if (route.name === 'notes') view = <NotesView />;
   else if (route.name === 'discover') view = <DiscoverView />;
+  else if (route.name === 'concerts') view = <ConcertsView />;
   else if (route.name === 'settings') view = <Settings />;
   else view = <Home />;
 
-  const activeTab = TABS.some((t) => t.name === route.name) ? route.name : null;
+  const activeTab = route.name === 'concerts' ? 'discover' : TABS.some((t) => t.name === route.name) ? route.name : null;
 
   return (
     <div className="app">
@@ -77,7 +84,7 @@ export function App() {
         <span className="brand">Magic Spells</span>
         {TABS.map(({ name, label, Icon }) => (
           <button key={name} className={activeTab === name ? 'on' : ''} aria-current={activeTab === name ? 'page' : undefined} onClick={() => go(`/${name}`)}>
-            <Icon size={24} />
+            <span className="tab-icon"><Icon size={24} />{name === 'discover' && fresh > 0 && <span className="tab-badge" aria-label={`${fresh} new concerts`}>{fresh}</span>}</span>
             <span>{label}</span>
           </button>
         ))}

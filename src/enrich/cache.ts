@@ -75,8 +75,8 @@ export class Provisional<T> extends Error {
   }
 }
 
-/** Look something up once; remember hits for a month and misses for two days. Errors are not remembered. */
-export function cached<T>(key: string, fn: () => Promise<T | null>): Promise<T | null> {
+/** Look something up once; remember hits for a month and misses for two days (or `ttl` for both). Errors are not remembered. */
+export function cached<T>(key: string, fn: () => Promise<T | null>, ttl?: number): Promise<T | null> {
   const hit = read<T | null>(key);
   if (hit) return Promise.resolve(hit.v);
   const running = inflight.get(key) as Promise<T | null> | undefined;
@@ -84,7 +84,7 @@ export function cached<T>(key: string, fn: () => Promise<T | null>): Promise<T |
   const p = fn()
     .then(
       (v) => {
-        write(key, v, v === null ? TTL.miss : TTL.long);
+        write(key, v, ttl ?? (v === null ? TTL.miss : TTL.long));
         return v;
       },
       (e) => {

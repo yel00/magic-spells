@@ -348,3 +348,29 @@ a.btn { text-decoration: none; color: var(--text); }
 @media (max-width: 819px) {
   .tabs button { font-size: 10px; }
 }
+
+/* ---- Concerts ---- */
+.concert-list { display: flex; flex-direction: column; gap: 10px; padding: 6px var(--gutter); max-width: 820px; }
+.concert-list-flush { padding: 0; }
+.concert { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px; background: var(--surface); color: var(--text); text-decoration: none; }
+.concert:active { opacity: 0.7; }
+.concert-date { flex: none; width: 52px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.concert-month { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.concert-day { font: 600 24px var(--serif); }
+.concert-weekday { font-size: 11px; color: var(--muted); }
+.concert .row-title { white-space: normal; font-weight: 600; }
+.concert .row-sub { white-space: normal; }
+.concert-go { flex: none; font-size: 13px; font-weight: 600; color: var(--accent); }
+.concert-status { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #ffb4a2; }
+.new-dot { display: inline-block; width: 8px; height: 8px; margin-left: 8px; border-radius: 50%; background: var(--gold); vertical-align: 2px; }
+.concert-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 var(--gutter) 8px; color: var(--muted); font-size: 14px; max-width: 820px; }
+.concert-bar strong { color: var(--text); }
+.concert-progress { padding: 8px var(--gutter) 12px; max-width: 520px; }
+.concert-teaser { display: flex; align-items: center; gap: 12px; width: calc(100% - 2 * var(--gutter)); max-width: 820px; margin: 0 var(--gutter) 16px; padding: 14px 16px; border-radius: 14px; background: var(--surface); }
+.concert-teaser .row-sub { white-space: normal; }
+.place-picker { display: flex; flex-direction: column; gap: 6px; max-width: 520px; }
+.place-locate { align-self: flex-start; padding: 0 4px; }
+.radius { padding: 8px 0 4px; }
+.link-quiet.inline { display: inline; min-height: 0; font-size: inherit; }
+.tab-icon { position: relative; display: inline-flex; }
+.tab-badge { position: absolute; top: -4px; right: -10px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--gold); color: var(--bg); font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; }
