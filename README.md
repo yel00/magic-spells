@@ -82,6 +82,21 @@ remote, so nothing here streams or stores music.
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
 - Demo mode with invented music, for looking around without an account
 
+## Run your own copy
+
+Anyone can run this for themselves. Each copy uses its owner's Spotify app, so
+Spotify's five-user limit for personal apps applies per copy, not to the
+project as a whole.
+
+1. Fork or clone this repository.
+2. Follow **Set it up** below: create a Spotify app, deploy to Vercel (or any
+   host that serves a Vite build and Node functions in `api/`), and add the
+   redirect URI.
+3. Add whichever optional keys you want. `.env.example` lists every setting
+   and what it turns on; the app works without any of them.
+
+Spotify Premium is needed to control playback.
+
 ## Set it up
 
 1. **Create a Spotify app** at <https://developer.spotify.com/dashboard>
@@ -285,3 +300,9 @@ on one device removes it from the others.
 
 To run the database tests locally: `DATABASE_URL=postgres://… npm test`
 (they are skipped when no database is given; CI always runs them).
+
+## Licence
+
+MIT; see [LICENSE](LICENSE). Third-party software, data sources and their
+terms are listed in [NOTICE.md](NOTICE.md). Not affiliated with or endorsed by
+Spotify.

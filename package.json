@@ -32,5 +32,7 @@
     "typescript": "^5.6.3",
     "vite": "^5.4.11",
     "vitest": "^2.1.8"
-  }
+  },
+  "license": "MIT",
+  "description": "A fast remote and music browser for Spotify on iPhone and iPad."
 }
