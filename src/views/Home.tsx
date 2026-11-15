@@ -1,5 +1,5 @@
 import { Card, Shelf, Status } from '../components/Shelf';
-import { GearIcon } from '../components/Icons';
+import { GearIcon, ToolsIcon } from '../components/Icons';
 import { TrackRow } from '../components/TrackRow';
 import { greeting, names, uniqueBy } from '../lib/format';
 import { go, pathForUri } from '../lib/router';
@@ -24,7 +24,10 @@ export function Home() {
     <div className="page">
       <header className="page-head">
         <h1>{greeting(new Date().getHours())}</h1>
-        <button className="icon-btn" onClick={() => go('/settings')} aria-label="Settings"><GearIcon /></button>
+        <span className="head-actions">
+          <button className="icon-btn" onClick={() => go('/tools')} aria-label="Musician tools"><ToolsIcon /></button>
+          <button className="icon-btn" onClick={() => go('/settings')} aria-label="Settings"><GearIcon /></button>
+        </span>
       </header>
 
       <Status loading={recent.loading && artists.loading} error={recent.error && artists.error} />

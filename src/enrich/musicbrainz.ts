@@ -7,7 +7,7 @@ const BASE = 'https://musicbrainz.org/ws/2';
 let queue: Promise<unknown> = Promise.resolve();
 let lastCall = 0;
 
-function mb<T>(path: string): Promise<T> {
+export function mb<T>(path: string): Promise<T> {
   const run = async (): Promise<T> => {
     for (let attempt = 0; ; attempt++) {
       const wait = lastCall + 1100 - Date.now();

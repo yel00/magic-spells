@@ -5,16 +5,38 @@ import type { Track } from '../spotify/types';
 import { AboutSkeleton } from './About';
 import { Art } from './Art';
 import { Videos } from './Discover';
+import { SongTabs } from './Tabs';
+import { trackAnalysis } from '../tools/lookup';
+import { camelot, keyName } from '../tools/keys';
+import { go } from '../lib/router';
+import { ui } from '../state/ui';
 
 export function SongInfoSheet({ track }: { track: Track }) {
   const artist = track.artists[0]?.name || '';
   const { data, loading, error } = useData(`info:song:${track.uri}`, () => songInfo(track.name, artist).then((v) => v ?? false));
+  const analysis = useData(`info:tempo:${track.uri}`, () => trackAnalysis({ name: track.name, artist, durationMs: track.duration_ms }).then((v) => v ?? false));
+  const openTools = () => {
+    ui.set({ infoFor: null, sheet: 'none' });
+    go('/tools');
+  };
   return (
     <div className="songinfo">
       <div className="row row-static actions-head">
         <Art images={track.album?.images} size={44} />
         <span className="row-text"><span className="row-title">{track.name}</span><span className="row-sub">{names(track.artists)}</span></span>
       </div>
+      <div className="tempo-row">
+        {analysis.loading && <span className="facts">Looking up tempo and key…</span>}
+        {analysis.data && (
+          <>
+            <span className="tempo-stat"><strong>≈ {analysis.data.bpm}</strong> BPM</span>
+            {analysis.data.key && <span className="tempo-stat"><strong>{keyName(analysis.data.key)}</strong> · {camelot(analysis.data.key)}</span>}
+          </>
+        )}
+        {analysis.data === false && <span className="facts">No tempo or key on record for this one.</span>}
+        <button className="link-quiet" onClick={openTools}>{analysis.data ? 'Check by ear' : 'Measure by ear'}</button>
+      </div>
+      <SongTabs uri={track.uri} title={track.name} artist={artist} />
       <Videos query={`${artist} ${track.name} live`} title="Live & other versions" />
       {loading && <AboutSkeleton />}
       {error && (

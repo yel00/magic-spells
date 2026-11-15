@@ -8,7 +8,7 @@ Spotify leaves out — credits, biographies, lyrics notes, live versions, concer
 It is an installable web app. Spotify itself plays the audio; this app is the
 remote, so nothing here streams or stores music.
 
-## What works today (phases 1–5)
+## What works today (phases 1–6)
 
 - Sign in with Spotify (no server, no secret — PKCE)
 - Now playing: artwork, seek, play/pause/skip, shuffle, repeat, volume
@@ -39,6 +39,17 @@ remote, so nothing here streams or stores music.
   whether artists you follow or play a lot have shows nearby, lists them by
   date with ticket links, re-checks once a day when opened, and flags shows
   that are new since you last looked. Artist pages show their nearby dates
+- Musician tools (the tuning-fork button on Home, and inside "About this song"):
+  - Tempo and key for a song, looked up from open databases, with the Camelot
+    code DJs use
+  - Listen: the microphone hears the room or your instrument and shows tempo,
+    key, and the note being played with how sharp or flat it is
+  - Tap tempo
+  - Tabs: a direct link to the song's Songsterr tab (with which instruments it
+    covers) plus searches on Ultimate Guitar and MuseScore
+  - Tab player: import Guitar Pro or MusicXML files, pick the guitar, bass or
+    piano part, slow it to 75% or 50%, loop it, add a click; files stay on
+    the device
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
 - Demo mode with invented music, for looking around without an account
 
@@ -106,7 +117,7 @@ npm run build      # typecheck + production build
 3. ~~Listening notes, synced between devices~~
 4. ~~Discovery (Last.fm / ListenBrainz) and YouTube live versions~~
 5. ~~Concert scanner~~ (push notifications for new shows still to do)
-6. Musician tools: BPM/key lookup, microphone analyzer, tab search and player
+6. ~~Musician tools: BPM/key lookup, microphone analyzer, tab search and player~~
 7. Later: Beatport (needs partner access), native shell for TestFlight, NAS files
 
 ## Where the extra information comes from
@@ -149,6 +160,22 @@ is not stored on the server. Distances are in miles.
 It scans when the app is opened, not in the background: a show announced today
 appears the next time you open the app. Background push notifications would
 need a scheduled server job and are not built yet.
+
+## How the musician tools work
+
+- **Tempo and key lookup.** Spotify closed this data to new apps. The app
+  finds the recording in MusicBrainz (matching on title, artist and length, so
+  it gets the studio cut rather than a live take) and reads its analysis from
+  AcousticBrainz. That archive stopped growing in 2022 and its values are
+  approximate, so the result is shown with "≈" and a link to measure by ear.
+- **Listening.** Nothing is recorded or uploaded; the maths runs on the phone.
+  Tempo comes from how regularly the loudness jumps; very fast songs can read
+  at half speed, so both readings are shown. Key comes from which of the
+  twelve notes are heard most, compared against the pattern of each key.
+- **Tabs.** Tab sites hold licences to show tabs and don't offer them for
+  reuse, so the app links to them rather than copying. The player
+  ([alphaTab](https://alphatab.net), loaded only when a tab is opened) plays
+  files you bring yourself. MIDI files are not supported.
 
 ## How notes sync
 

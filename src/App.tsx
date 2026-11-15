@@ -25,6 +25,8 @@ import { Library } from './views/Library';
 import { NotesView } from './views/NotesView';
 import { Search } from './views/Search';
 import { Settings } from './views/Settings';
+import { TabPlayerView } from './views/TabPlayerView';
+import { ToolsView } from './views/ToolsView';
 
 const TABS = [
   { name: 'home', label: 'Home', Icon: HomeIcon },
@@ -73,6 +75,8 @@ export function App() {
   else if (route.name === 'notes') view = <NotesView />;
   else if (route.name === 'discover') view = <DiscoverView />;
   else if (route.name === 'concerts') view = <ConcertsView />;
+  else if (route.name === 'tools') view = <ToolsView />;
+  else if (route.name === 'tab' && route.id) view = <TabPlayerView id={route.id} />;
   else if (route.name === 'settings') view = <Settings />;
   else view = <Home />;
 

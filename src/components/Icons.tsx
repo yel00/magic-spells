@@ -36,6 +36,7 @@ export const SearchIcon = ({ size }: P) => <Svg size={size}><circle cx="11" cy="
 export const LibraryIcon = ({ size }: P) => <Svg size={size}><path d="M5 3.500v17M10 3.500v17M14.500 5.200l4.800 15" /></Svg>;
 export const NotesIcon = ({ size }: P) => <Svg size={size}><path d="M5 4.5h10.5L19 8v11.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-14a1 1 0 0 1 1-1zM8 10h8M8 13.500h8M8 17h5" /></Svg>;
 export const DiscoverIcon = ({ size }: P) => <Svg size={size}><circle cx="12" cy="12" r="8.500" /><path d="M15.500 8.500l-2 5-5 2 2-5z" /></Svg>;
+export const ToolsIcon = ({ size }: P) => <Svg size={size}><path d="M9 3v8.500a4.500 4.500 0 1 0 3 0V3M15 3v6M9 6.500h3" /><circle cx="10.500" cy="15.800" r="1.200" fill="currentColor" /></Svg>;
 export const ChevronDown = ({ size }: P) => <Svg size={size}><path d="M5.500 9l6.500 6.500L18.500 9" /></Svg>;
 export const ChevronLeft = ({ size }: P) => <Svg size={size}><path d="M15 5.500L8.500 12l6.500 6.500" /></Svg>;
 export const MoreIcon = ({ size }: P) => <Svg size={size} fill><circle cx="5" cy="12" r="1.800" /><circle cx="12" cy="12" r="1.800" /><circle cx="19" cy="12" r="1.800" /></Svg>;
