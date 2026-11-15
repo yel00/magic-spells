@@ -5,6 +5,8 @@ export interface DrawnNode extends MapNode {
   kind: 'centre' | 'mine' | 'near' | 'rec';
   /** Neighbourhood colour index. */
   group?: number;
+  /** An explicit colour, overriding the neighbourhood colour. */
+  colour?: string;
   dim?: boolean;
 }
 
@@ -18,18 +20,24 @@ interface View {
 
 /** A pannable, zoomable map of artist names. Drag to move, pinch or scroll to zoom, tap a name to select it. */
 export function MapCanvas({
-  nodes, edges, positions, selected, onSelect,
+  nodes, edges, positions, selected, onSelect, detail, focus,
 }: {
   nodes: DrawnNode[];
   edges: MapEdge[];
   positions: Map<string, Point>;
   selected: string | null;
   onSelect: (id: string | null) => void;
+  /** For very large maps: show only the most prominent names when zoomed out, and more as you zoom in. */
+  detail?: boolean;
+  /** Fly to this node when it changes. */
+  focus?: string | null;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 });
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{ moved: number; startDist: number; startK: number } | null>(null);
+  /** The zoom at which the whole map fits: the reference point for how many names to show. */
+  const fitK = useRef(1);
 
   const bounds = useMemo(() => {
     let minX = -100, maxX = 100, minY = -100, maxY = 100;
@@ -50,6 +58,7 @@ export function MapCanvas({
     if (!el) return;
     const { width, height } = el.getBoundingClientRect();
     const k = Math.min(width / (bounds.maxX - bounds.minX + 40), height / (bounds.maxY - bounds.minY + 40), 1.6);
+    fitK.current = k;
     setView({ k, x: width / 2 - ((bounds.minX + bounds.maxX) / 2) * k, y: height / 2 - ((bounds.minY + bounds.maxY) / 2) * k });
   };
   // Re-fit when the map's contents change size, not on every selection.
@@ -57,7 +66,7 @@ export function MapCanvas({
 
   const zoomAt = (cx: number, cy: number, factor: number) =>
     setView((v) => {
-      const k = Math.max(0.25, Math.min(4, v.k * factor));
+      const k = Math.max(detail ? 0.03 : 0.25, Math.min(4, v.k * factor));
       return { k, x: cx - ((cx - v.x) / v.k) * k, y: cy - ((cy - v.y) / v.k) * k };
     });
 
@@ -98,8 +107,55 @@ export function MapCanvas({
     gesture.current = null;
   };
 
-  const linked = new Set<string>();
-  if (selected) for (const e of edges) if (e.a === selected || e.b === selected) linked.add(e.a === selected ? e.b : e.a);
+  useEffect(() => {
+    const p = focus ? positions.get(focus) : null;
+    const el = host.current;
+    if (!p || !el) return;
+    const k = Math.max(view.k, 0.9);
+    setView({ k, x: el.clientWidth / 2 - p.x * k, y: el.clientHeight / 2 - p.y * k });
+    // Only when the focus target changes.
+  }, [focus]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Zoom steps for level of detail, so panning doesn't redraw a thousand names.
+  const lod = detail ? Math.round(Math.log2(Math.max(view.k, 0.03)) * 3) : 0;
+  const rank = useMemo(() => new Map([...nodes].sort((a, b) => b.size - a.size).map((n, i) => [n.id, i])), [nodes]);
+  const drawn = useMemo(() => {
+    const k = detail ? 2 ** (lod / 3) : 1;
+    const linked = new Set<string>();
+    if (selected) for (const e of edges) if (e.a === selected || e.b === selected) linked.add(e.a === selected ? e.b : e.a);
+    // Show about thirty names at the widest view. Zooming in shrinks the visible area by the
+    // square of the zoom, so the number of names allowed grows the same way and the screen stays readable.
+    const allowed = detail ? Math.max(30, Math.round(30 * (k / fitK.current) ** 2)) : Infinity;
+    const visible = (n: DrawnNode) => !detail || (rank.get(n.id) ?? 0) < allowed || n.id === selected || linked.has(n.id);
+    const shown = new Set(nodes.filter(visible).map((n) => n.id));
+    return (
+      <>
+        {edges.map((e) => {
+          if (!shown.has(e.a) || !shown.has(e.b)) return null;
+          const a = positions.get(e.a);
+          const b = positions.get(e.b);
+          if (!a || !b) return null;
+          const hot = selected !== null && (e.a === selected || e.b === selected);
+          return <line key={`${e.a}|${e.b}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className={hot ? 'map-edge map-edge-hot' : 'map-edge'} strokeWidth={detail ? 1 / k : undefined} strokeOpacity={hot ? 0.9 : selected ? 0.05 : 0.08 + e.w * 0.22} />;
+        })}
+        {nodes.map((n) => {
+          const p = positions.get(n.id);
+          if (!p || !shown.has(n.id)) return null;
+          const faded = n.dim || (selected !== null && n.id !== selected && !linked.has(n.id));
+          const colour = n.colour ?? (n.kind === 'rec' ? '#ffd98a' : n.kind === 'centre' ? '#ffffff' : PALETTE[(n.group ?? 0) % PALETTE.length]);
+          // On a large map, names keep a readable size on screen however far out the view is.
+          const grow = detail ? Math.max(1, 11.5 / (fontSize(n.size) * k)) : 1;
+          const box = labelBox(n);
+          return (
+            <g key={n.id} data-id={n.id} transform={`translate(${p.x} ${p.y}) scale(${grow})`} className={`map-node ${n.id === selected ? 'map-node-on' : ''}`} opacity={faded ? 0.22 : 1}>
+              <rect x={-box.w / 2} y={-box.h / 2} width={box.w} height={box.h} rx={box.h / 2} className="map-pill" stroke={n.kind === 'rec' ? '#ffd98a' : 'none'} strokeDasharray={n.kind === 'rec' ? '3 3' : undefined} />
+              <text textAnchor="middle" dominantBaseline="central" fontSize={fontSize(n.size)} fontWeight={n.kind === 'centre' ? 700 : 500} fill={colour}>{n.label}</text>
+            </g>
+          );
+        })}
+      </>
+    );
+  }, [nodes, edges, positions, selected, detail, lod, rank]);
 
   return (
     <div
@@ -113,26 +169,7 @@ export function MapCanvas({
     >
       <svg width="100%" height="100%" role="img" aria-label="Map of similar artists">
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
-          {edges.map((e) => {
-            const a = positions.get(e.a);
-            const b = positions.get(e.b);
-            if (!a || !b) return null;
-            const hot = selected !== null && (e.a === selected || e.b === selected);
-            return <line key={`${e.a}|${e.b}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className={hot ? 'map-edge map-edge-hot' : 'map-edge'} strokeOpacity={hot ? 0.9 : selected ? 0.05 : 0.08 + e.w * 0.22} />;
-          })}
-          {nodes.map((n) => {
-            const p = positions.get(n.id);
-            if (!p) return null;
-            const faded = n.dim || (selected !== null && n.id !== selected && !linked.has(n.id));
-            const colour = n.kind === 'rec' ? '#ffd98a' : n.kind === 'centre' ? '#ffffff' : PALETTE[(n.group ?? 0) % PALETTE.length];
-            const box = labelBox(n);
-            return (
-              <g key={n.id} data-id={n.id} transform={`translate(${p.x} ${p.y})`} className={`map-node ${n.id === selected ? 'map-node-on' : ''}`} opacity={faded ? 0.22 : 1}>
-                <rect x={-box.w / 2} y={-box.h / 2} width={box.w} height={box.h} rx={box.h / 2} className="map-pill" stroke={n.kind === 'rec' ? '#ffd98a' : 'none'} strokeDasharray={n.kind === 'rec' ? '3 3' : undefined} />
-                <text textAnchor="middle" dominantBaseline="central" fontSize={fontSize(n.size)} fontWeight={n.kind === 'centre' ? 700 : 500} fill={colour}>{n.label}</text>
-              </g>
-            );
-          })}
+          {drawn}
         </g>
       </svg>
       <div className="map-zoom">

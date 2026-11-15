@@ -1,5 +1,5 @@
 // App-shell cache: the page loads instantly and offline; API calls are never cached here.
-const CACHE = 'spells-shell-v2';
+const CACHE = 'spells-shell-v3';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/'])).then(() => self.skipWaiting()));
@@ -30,7 +30,7 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
-  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/alphatab/')) {
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/alphatab/') || url.pathname === '/genres.json') {
     // Hashed build output never changes under the same name.
     e.respondWith(
       caches.match(req).then(

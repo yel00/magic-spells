@@ -513,3 +513,9 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
   .map-canvas { margin: 0 var(--gutter); }
   .map-card { margin: 10px var(--gutter) 0; max-width: 560px; }
 }
+.genre-search { position: relative; padding-bottom: 10px; z-index: 3; }
+.genre-matches { position: absolute; left: var(--gutter); right: var(--gutter); top: 50px; padding: 4px 12px; border-radius: 12px; background: var(--surface-2); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); }
+.genre-matches .action { text-transform: capitalize; min-height: 44px; }
+.genre-card { max-height: 44vh; overflow-y: auto; }
+.genre-rel { display: flex; flex-direction: column; gap: 6px; }
+.genre-card a.btn { text-decoration: none; }

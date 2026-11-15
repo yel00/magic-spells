@@ -28,7 +28,7 @@ export const fontSize = (size: number) => 11 + Math.round(size * 7);
 /** Rough label box; exact text metrics aren't needed to keep names from colliding. */
 export const labelBox = (n: MapNode) => ({ w: n.label.length * fontSize(n.size) * 0.56 + 18, h: fontSize(n.size) + 12 });
 
-export function layout(nodes: MapNode[], edges: MapEdge[], iterations = 260): Map<string, Point> {
+export function layout(nodes: MapNode[], edges: MapEdge[], iterations = 260, labelPasses = 80): Map<string, Point> {
   const n = nodes.length;
   const pos = nodes.map((node, i) => {
     if (node.pinned) return { x: 0, y: 0 };
@@ -90,7 +90,7 @@ export function layout(nodes: MapNode[], edges: MapEdge[], iterations = 260): Ma
 
   // Push overlapping labels apart along whichever axis needs the smaller move.
   const boxes = nodes.map(labelBox);
-  for (let pass = 0; pass < 80; pass++) {
+  for (let pass = 0; pass < labelPasses; pass++) {
     let moved = false;
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft } from '../components/Icons';
 import { Card, Grid, Status } from '../components/Shelf';
 import { names, year } from '../lib/format';
+import { go } from '../lib/router';
 import { useData } from '../lib/useData';
 import * as api from '../spotify/api';
 import type { AlbumRef, Artist } from '../spotify/types';
@@ -52,7 +53,8 @@ export function BrowseView({ kind, name }: { kind: 'label' | 'genre'; name: stri
       {kind === 'genre' && (
         <p className="fineprint">
           Where this genre sits among the others:{' '}
-          <a className="link-quiet inline" href="https://cratto.app/genres" target="_blank" rel="noreferrer">Cratto genre map ↗</a>{' · '}
+          <button className="link-quiet inline" onClick={() => go(`/genres/${encodeURIComponent(name)}`)}>genre map</button>{' · '}
+          <a className="link-quiet inline" href="https://cratto.app/genres" target="_blank" rel="noreferrer">Cratto ↗</a>{' · '}
           <a className="link-quiet inline" href="https://musicmap.info" target="_blank" rel="noreferrer">Musicmap ↗</a>
         </p>
       )}

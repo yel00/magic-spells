@@ -114,3 +114,22 @@ describe('reading the library', () => {
     expect(scoreLibrary({ top: [], followed: [], liked: [], playlists: [] })).toEqual([]);
   });
 });
+
+describe('genre data file', () => {
+  it('is well formed: every link points at a real genre and every genre has a place', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const data = JSON.parse(readFileSync(join(__dirname, '../public/genres.json'), 'utf8'));
+    expect(data.genres.length).toBeGreaterThan(1000);
+    const names = new Set<string>();
+    for (const g of data.genres) {
+      expect(typeof g.n === 'string' && g.n.length > 0).toBe(true);
+      expect(Number.isFinite(g.x) && Number.isFinite(g.y)).toBe(true);
+      expect(g.s >= 0 && g.s <= 1).toBe(true);
+      expect(g.f >= -1 && g.f < data.families.length).toBe(true);
+      for (const link of [...g.p, ...g.i]) expect(Number.isInteger(link) && link >= 0 && link < data.genres.length).toBe(true);
+      names.add(g.n.toLowerCase());
+    }
+    for (const must of ['jazz', 'rock', 'hip-hop', 'shoegaze', 'bebop', 'techno']) expect(names.has(must)).toBe(true);
+  });
+});

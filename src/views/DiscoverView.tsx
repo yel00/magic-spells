@@ -43,6 +43,13 @@ export function DiscoverView() {
         </span>
         <span className="concert-go">Open</span>
       </button>
+      <button className="concert-teaser" onClick={() => go('/genres')}>
+        <span className="row-text">
+          <span className="row-title">Genre map</span>
+          <span className="row-sub">1,400 genres: what each is a kind of, and what it grew out of</span>
+        </span>
+        <span className="concert-go">Open</span>
+      </button>
       <Status loading={waiting} error={top.error} />
       {!waiting && seeds.length === 0 && (
         <p className="status">Play some music first — suggestions here are built from the artists you listen to most.</p>
