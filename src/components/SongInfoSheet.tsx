@@ -6,6 +6,7 @@ import { AboutSkeleton } from './About';
 import { Art } from './Art';
 import { Videos } from './Discover';
 import { SongTabs } from './Tabs';
+import { SongVersions } from './Versions';
 import { trackAnalysis } from '../tools/lookup';
 import { camelot, keyName } from '../tools/keys';
 import { go } from '../lib/router';
@@ -52,6 +53,7 @@ export function SongInfoSheet({ track }: { track: Track }) {
         <button className="link-quiet" onClick={openTools}>{analysis.data ? 'Check by ear' : 'Measure by ear'}</button>
       </div>
       <SongTabs uri={track.uri} title={track.name} artist={artist} />
+      <SongVersions track={track} />
       <Videos query={`${artist} ${track.name} live`} title="Live & other versions" />
       {loading && <AboutSkeleton />}
       {error && (

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Rating, Reception as ReceptionData } from '../enrich/reception';
 import type { CreditGroup, Link, Related, Summary } from '../enrich/types';
 import { go } from '../lib/router';
 
@@ -7,7 +8,7 @@ export function AboutText({ summary }: { summary: Summary }) {
   const long = summary.text.length > 260;
   return (
     <div className="about-text">
-      <p className={long && !open ? 'clamp' : ''}>{summary.text}</p>
+      <p className={`prose ${long && !open ? 'clamp' : ''}`}>{summary.text}</p>
       <div className="about-foot">
         {long && <button className="link-quiet" onClick={() => setOpen(!open)}>{open ? 'Show less' : 'Read more'}</button>}
         <a className="link-quiet" href={summary.url} target="_blank" rel="noreferrer">{summary.source} ↗</a>
@@ -95,4 +96,36 @@ export function Credits({ groups }: { groups: CreditGroup[] }) {
 
 export function AboutSkeleton() {
   return <div className="about-skeleton" aria-label="Loading background"><i /><i /><i /></div>;
+}
+
+function Score({ r, strong }: { r: Rating; strong?: boolean }) {
+  return (
+    <li className={`score ${strong ? 'score-strong' : ''}`}>
+      <span className="score-source">{r.source}</span>
+      <span className="score-value">{r.score}</span>
+      <span className="score-bar">{r.fraction !== undefined && <i style={{ width: `${Math.round(r.fraction * 100)}%` }} />}</span>
+    </li>
+  );
+}
+
+/** How an album was received: review scores and Wikipedia's account of the reviews. */
+export function Reception({ data }: { data: ReceptionData }) {
+  const text = data.paragraphs.join('\n\n');
+  return (
+    <section className="about">
+      <h2>Reception</h2>
+      {text && <AboutText summary={{ text, url: data.url, source: 'Wikipedia' }} />}
+      <div className="score-tables">
+        {data.tables.map((t) => (
+          <div key={t.title} className="credit-group">
+            <h3>{t.title}</h3>
+            <ul className="scores">
+              {t.aggregate.map((r) => <Score key={r.source} r={r} strong />)}
+              {t.ratings.map((r) => <Score key={r.source} r={r} />)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }

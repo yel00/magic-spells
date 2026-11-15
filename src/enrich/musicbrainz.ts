@@ -45,8 +45,9 @@ const HOSTS: [RegExp, string][] = [
   [/youtube\.com/, 'YouTube'], [/bandcamp\.com/, 'Bandcamp'], [/soundcloud\.com/, 'SoundCloud'], [/discogs\.com/, 'Discogs'],
   [/allmusic\.com/, 'AllMusic'], [/last\.fm/, 'Last.fm'], [/setlist\.fm/, 'Setlist.fm'], [/songkick\.com/, 'Songkick'],
   [/bandsintown\.com/, 'Bandsintown'], [/genius\.com/, 'Genius'], [/rateyourmusic\.com/, 'Rate Your Music'],
+  [/pitchfork\.com/, 'Pitchfork'], [/bbc\.co\.uk\/music\/reviews/, 'BBC review'], [/metacritic\.com/, 'Metacritic'],
 ];
-const LINK_ORDER = ['Official site', 'Bandcamp', 'YouTube', 'Instagram', 'Genius', 'Discogs', 'AllMusic', 'Last.fm', 'Setlist.fm', 'Songkick', 'Bandsintown', 'SoundCloud', 'Rate Your Music', 'Facebook', 'X', 'TikTok'];
+const LINK_ORDER = ['Official site', 'Bandcamp', 'YouTube', 'Instagram', 'Genius', 'Discogs', 'AllMusic', 'Pitchfork', 'BBC review', 'Metacritic', 'Last.fm', 'Setlist.fm', 'Songkick', 'Bandsintown', 'SoundCloud', 'Rate Your Music', 'Facebook', 'X', 'TikTok'];
 
 /** Who is in a band, or which bands a person is in, from MusicBrainz "member of band" relationships. */
 export function bandLinks(relations: any[] | undefined): { members: Related[]; memberOf: Related[] } {
@@ -249,19 +250,23 @@ export async function findAlbum(album: { name: string; artist: string; upc?: str
   if (!release) return null;
 
   let wikidata: string | undefined;
+  let reviewLinks: Link[] = [];
   if (groupId) {
     const group = await mb<any>(`/release-group/${groupId}?inc=url-rels`).catch(() => null);
-    wikidata = linksFrom(group?.relations).wikidata;
+    const found = linksFrom(group?.relations);
+    wikidata = found.wikidata;
+    // Review and reference pages for the album itself (AllMusic, Pitchfork, Rate Your Music…).
+    reviewLinks = found.links.filter((l) => !['Official site', 'Bandcamp', 'YouTube', 'Instagram', 'Facebook', 'X', 'TikTok', 'SoundCloud'].includes(l.label));
   }
-  return shape(release, wikidata);
+  return shape(release, wikidata, reviewLinks);
 }
 
-function shape(release: any, wikidata: string | undefined): MbAlbum {
+function shape(release: any, wikidata: string | undefined, reviewLinks: Link[] = []): MbAlbum {
   return {
     label: (release['label-info'] || []).map((l: any) => l.label?.name).find(Boolean),
     facts: albumFacts(release),
     credits: creditsFrom(release),
-    links: [{ label: 'MusicBrainz', url: `https://musicbrainz.org/release/${release.id}` }],
+    links: [...reviewLinks, { label: 'MusicBrainz', url: `https://musicbrainz.org/release/${release.id}` }],
     wikidata,
   };
 }

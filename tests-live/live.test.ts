@@ -103,3 +103,23 @@ describe('live lyrics', () => {
     expect(await lyricsFor({ name: 'Zxqv Nonexistent Song 93871', artist: 'Nobody At All', durationMs: 200000 })).toBeNull();
   }, 60_000);
 });
+
+describe('live versions and reviews', () => {
+  it('finds other recordings of a much-covered song', async () => {
+    const { otherRecordings } = await import('../src/enrich/recordings');
+    const r = await otherRecordings({ name: 'Hallelujah', artist: 'Leonard Cohen' });
+    console.log('covers:', r?.byOthers.length, r?.byOthers.slice(0, 8).map((x) => `${x.artist} ${x.year || ''}`).join(' | '));
+    console.log('own takes:', r?.bySameArtist.slice(0, 5).map((x) => `${x.title} ${x.note || ''} ${x.year || ''}`).join(' | '));
+    expect(r?.byOthers.length).toBeGreaterThan(5);
+  }, 120_000);
+
+  it('reads an album’s reception from Wikipedia', async () => {
+    const { receptionFor } = await import('../src/enrich/reception');
+    const r = await receptionFor('https://en.m.wikipedia.org/wiki/Rumours_(album)');
+    console.log('Rumours:', r?.url, '|', r?.tables.map((t) => `${t.title}: ${t.ratings.length} ratings, ${t.aggregate.length} agg`).join('; '), '|', r?.paragraphs[0]?.slice(0, 140));
+    expect(r?.tables.length).toBeGreaterThan(0);
+    expect(r?.paragraphs.length).toBeGreaterThan(0);
+    const modern = await receptionFor('https://en.wikipedia.org/wiki/In_Rainbows');
+    console.log('In Rainbows:', JSON.stringify(modern?.tables[0]?.aggregate), modern?.tables[0]?.ratings.length);
+  }, 120_000);
+});

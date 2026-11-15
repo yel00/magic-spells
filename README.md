@@ -55,6 +55,13 @@ remote, so nothing here streams or stores music.
   on or mixed, each of which opens on Spotify. Artist pages list band members
   the same way. Record labels and genres are tappable and open everything
   Spotify files under them
+- Versions: an artist's remasters and deluxe editions are folded into one
+  entry per album, with a Versions list on the album page. "Find other
+  recordings of this song" lists covers and the artist's live or alternate
+  takes, and plays one if Spotify has it
+- Reception on album pages: review scores (the publications' own ratings, and
+  Metacritic where recorded) and Wikipedia's account of the reviews, plus
+  links to AllMusic, Pitchfork and similar pages where MusicBrainz has them
 - Lyrics on Now Playing: time-synced where available, with the current line
   highlighted and tap-to-jump; plain lyrics otherwise
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
@@ -182,6 +189,19 @@ need a scheduled server job and are not built yet.
   Lyrics are only used when they belong to a recording of the same length
   (within three seconds), so a live version's timing is never applied to the
   studio track. LRCLIB is community-sourced, not a licensed lyrics service.
+
+## How versions and reviews work
+
+- **Editions** are grouped by title once edition wording is removed ("Deluxe
+  Edition", "2011 Remaster"). The plain edition is shown; if there isn't one,
+  the earliest. A single is never merged into an album of the same name.
+- **Other recordings** come from MusicBrainz, which links each recording to
+  the composition it performs. Up to 300 recordings are read, so for songs
+  with thousands of covers the list is a sample, not complete.
+- **Reviews** are read from the album's Wikipedia article: the scores table,
+  which Wikipedia stores as structured data, and the first paragraphs of the
+  reception section. This is Wikipedia's summary of the reviews, not the
+  reviews themselves; full review text is licensed and not available.
 
 ## How the musician tools work
 

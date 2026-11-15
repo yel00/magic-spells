@@ -50,6 +50,14 @@ ALBUM_WORDS.forEach((name, i) => {
   albums.push({ ...ref, tracks: { items: list, next: null, total: list.length }, copyrights: [{ text: '℗ Demo recordings — not real music' }] });
 });
 
+// Alternate editions of the first two albums, so version grouping can be seen in the demo.
+[['al0', '(Deluxe Edition)', '2019-05-01', 12], ['al0', '- 10th Anniversary Remaster', '2023-01-12', 9], ['al1', '(Expanded)', '2020-09-03', 14]].forEach(([id, suffix, date, count], n) => {
+  const base = albums.find((a) => a.id === id)!;
+  const ref: AlbumRef = { ...base, tracks: undefined, id: `${id}v${n}`, uri: `spotify:album:${id}v${n}`, name: `${base.name} ${suffix}`, release_date: date as string, total_tracks: count as number } as AlbumRef;
+  const list = base.tracks.items.map((t, i) => ({ ...t, id: `${t.id}v${n}`, uri: `${t.uri}v${n}`, album: ref, track_number: i + 1 }));
+  albums.push({ ...ref, tracks: { items: list, next: null, total: list.length }, copyrights: base.copyrights });
+});
+
 const PLAYLIST_NAMES = ['Sunday Morning Slow', 'Deep Focus Desk', 'Road Trip North', 'Late Night Kitchen', 'New Finds'];
 const playlists: (Playlist & { list: Track[] })[] = PLAYLIST_NAMES.map((name, i) => {
   const list = tracks.filter((_, n) => (n * (i + 3)) % 9 === 0).slice(0, 24);
@@ -237,6 +245,10 @@ export async function demoRequest(method: string, url: URL, body: any): Promise<
     if (field('genre')) {
       const list = artists.filter((a) => (a.genres || []).includes(field('genre')!));
       return { artists: { ...page(list.slice(offset, offset + 10)), total: list.length } };
+    }
+    if (field('track')) {
+      const list = tracks.filter((t) => t.name.toLowerCase() === field('track') && t.artists[0].name.toLowerCase() === field('artist'));
+      return { tracks: page(list.slice(0, 5)) };
     }
     if (field('album')) {
       const list = albums.filter((a) => a.name.toLowerCase() === field('album') && (!field('artist') || a.artists[0].name.toLowerCase() === field('artist')));

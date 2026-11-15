@@ -1,11 +1,15 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { AboutSkeleton, AboutText, Chips, Credits, Facts, Links, RelatedChips } from '../components/About';
+import { AboutSkeleton, AboutText, Chips, Credits, Facts, Links, Reception, RelatedChips } from '../components/About';
+import { demoReception, receptionFor } from '../enrich/reception';
+import { isDemo } from '../spotify/auth';
 import { ConcertCard } from '../components/Concerts';
 import { concerts, showsNear } from '../concerts/store';
 import { useStore } from '../lib/store';
 import { Art, pickImage } from '../components/Art';
 import { ChevronLeft, HeartIcon, PlayIcon, ShuffleIcon } from '../components/Icons';
 import { SimilarShelf, Videos } from '../components/Discover';
+import { AlbumVersions } from '../components/Versions';
+import { groupEditions } from '../spotify/editions';
 import { NotesSection } from '../components/Notes';
 import { Card, Shelf, Status } from '../components/Shelf';
 import { TrackRow } from '../components/TrackRow';
@@ -90,6 +94,10 @@ export function AlbumView({ id }: { id: string }) {
   const info = useData(a ? `info:album:${id}` : null, () =>
     albumInfo({ name: a!.name, artist: a!.artists[0]?.name || '', upc: a!.external_ids?.upc }).then((v) => v ?? false),
   );
+  const articleUrl = info.data ? info.data.about?.url : undefined;
+  const reception = useData(a && articleUrl ? `reception:${id}` : null, () =>
+    isDemo() ? Promise.resolve(demoReception(a!.name)) : receptionFor(articleUrl!).then((v) => v ?? false),
+  );
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
   const tracks = a.tracks.items;
   const total = tracks.reduce((n, t) => n + t.duration_ms, 0);
@@ -122,6 +130,7 @@ export function AlbumView({ id }: { id: string }) {
           </div>
         ))}
       </div>
+      <AlbumVersions album={a} />
       <NotesSection subject={{ subject_uri: a.uri, parent_uri: null, title: a.name, subtitle: names(a.artists), image: pickImage(a.images, 150) || null }} />
       {info.loading && <section className="about"><AboutSkeleton /></section>}
       {info.data && (
@@ -134,6 +143,7 @@ export function AlbumView({ id }: { id: string }) {
           <Links links={info.data.links} />
         </section>
       )}
+      {reception.data && <Reception data={reception.data} />}
       {a.copyrights?.[0] && <p className="fineprint">{a.copyrights[0].text}</p>}
     </div>
   );
@@ -147,9 +157,11 @@ export function ArtistView({ id }: { id: string }) {
   const shows = useData(a && place ? `shows:${id}:${place.lat},${place.lon},${place.radius}` : null, () => showsNear(a!.name).then((v) => v ?? []));
   const popular = useData(a ? `popular:${id}` : null, () => popularTracks(a!.name).then((v) => v ?? []));
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
-  const all = disc.data?.items || [];
-  const albums = all.filter((x) => x.album_type === 'album');
-  const singles = all.filter((x) => x.album_type !== 'album');
+  // One card per album: remasters and deluxe editions are folded together.
+  const all = groupEditions(disc.data?.items || []);
+  const albums = all.filter((g) => g.primary.album_type === 'album');
+  const singles = all.filter((g) => g.primary.album_type !== 'album');
+  const sub = (g: (typeof all)[number]) => [year(g.primary.release_date), g.editions.length > 1 && `${g.editions.length} versions`].filter(Boolean).join(' · ');
   return (
     <div className="page">
       <Hero images={a.images} round kicker="Artist" title={a.name} uri={a.uri} lines={[(a.genres?.length ? a.genres : info.data ? info.data.genres : []).slice(0, 3).join(' · ')]}>
@@ -181,12 +193,12 @@ export function ArtistView({ id }: { id: string }) {
       <Status loading={disc.loading} error={disc.error} />
       {albums.length > 0 && (
         <Shelf title="Albums">
-          {albums.map((x) => <Card key={x.id} title={x.name} subtitle={year(x.release_date)} images={x.images} to={`/album/${x.id}`} />)}
+          {albums.map((g) => <Card key={g.primary.id} title={g.primary.name} subtitle={sub(g)} images={g.primary.images} to={`/album/${g.primary.id}`} />)}
         </Shelf>
       )}
       {singles.length > 0 && (
         <Shelf title="Singles & EPs">
-          {singles.map((x) => <Card key={x.id} title={x.name} subtitle={year(x.release_date)} images={x.images} to={`/album/${x.id}`} />)}
+          {singles.map((g) => <Card key={g.primary.id} title={g.primary.name} subtitle={sub(g)} images={g.primary.images} to={`/album/${g.primary.id}`} />)}
         </Shelf>
       )}
       {!!shows.data?.length && (
