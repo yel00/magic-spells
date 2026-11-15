@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, Grid, Status } from '../components/Shelf';
+import { TagBrowser } from '../components/Tags';
 import { TrackRow } from '../components/TrackRow';
 import { names } from '../lib/format';
 import { useData } from '../lib/useData';
@@ -7,7 +8,7 @@ import * as api from '../spotify/api';
 import type { Paging } from '../spotify/types';
 import { commands } from '../state/player';
 
-const TABS = ['Playlists', 'Albums', 'Artists', 'Songs'] as const;
+const TABS = ['Playlists', 'Albums', 'Artists', 'Songs', 'Tags'] as const;
 type Tab = (typeof TABS)[number];
 
 let remembered: Tab = 'Playlists';
@@ -112,6 +113,7 @@ export function Library() {
       {tab === 'Albums' && <Albums />}
       {tab === 'Artists' && <Artists />}
       {tab === 'Songs' && <Songs />}
+      {tab === 'Tags' && <TagBrowser />}
     </div>
   );
 }

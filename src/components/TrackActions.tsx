@@ -69,6 +69,12 @@ export function TrackActions({ track }: { track: Track }) {
           >
             Write a note
           </button>
+          <button
+            className="action"
+            onClick={() => ui.set({ actionsFor: null, tagsFor: { subject_uri: track.uri, title: track.name, subtitle: names(track.artists), image: pickImage(track.album?.images, 150) || null } })}
+          >
+            Tags…
+          </button>
           {track.album && <button className="action" onClick={() => nav(`/album/${track.album!.id}`)}>Go to album</button>}
           {track.artists[0] && <button className="action" onClick={() => nav(`/artist/${track.artists[0].id}`)}>Go to artist</button>}
         </>

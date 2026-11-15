@@ -15,6 +15,9 @@ import { concerts, newCount, scan as scanConcerts } from './concerts/store';
 import { useStore } from './lib/store';
 import { useData } from './lib/useData';
 import { openNotes } from './notes/store';
+import { openTags } from './tags/store';
+import { TagEditor } from './components/Tags';
+import { TagsView } from './views/TagsView';
 import * as api from './spotify/api';
 import { startPolling, stopPolling } from './state/player';
 import { openSheet, ui } from './state/ui';
@@ -45,7 +48,7 @@ const scrollMemory = new Map<string, number>();
 
 export function App() {
   const route = useRoute();
-  const { sheet, actionsFor, infoFor, noteDraft, lyrics, mix, video, toast } = useStore(ui);
+  const { sheet, actionsFor, infoFor, noteDraft, tagsFor, lyrics, mix, video, toast } = useStore(ui);
   const me = useData('me', api.me);
   const userId = me.data?.id;
   const fresh = newCount(useStore(concerts));
@@ -60,6 +63,7 @@ export function App() {
   useEffect(() => {
     if (!userId) return;
     openNotes(userId);
+    openTags(userId);
     // Quietly re-check for concerts, at most once a day.
     scanConcerts();
   }, [userId]);
@@ -84,12 +88,13 @@ export function App() {
   else if ((route.name === 'label' || route.name === 'genre') && route.id) view = <BrowseView key={key} kind={route.name} name={route.id} />;
   else if (route.name === 'map') view = route.id ? <ArtistMapView key={route.id} name={route.id} /> : <LibraryMapView />;
   else if (route.name === 'genres') view = <GenreMapView start={route.id} />;
+  else if (route.name === 'tags') view = <TagsView key={route.id || ''} tag={route.id} />;
   else if (route.name === 'tools') view = <ToolsView />;
   else if (route.name === 'tab' && route.id) view = <TabPlayerView id={route.id} />;
   else if (route.name === 'settings') view = <Settings />;
   else view = <Home />;
 
-  const activeTab = ['concerts', 'map', 'genres'].includes(route.name) ? 'discover' : TABS.some((t) => t.name === route.name) ? route.name : null;
+  const activeTab = route.name === 'tags' ? 'library' : ['concerts', 'map', 'genres'].includes(route.name) ? 'discover' : TABS.some((t) => t.name === route.name) ? route.name : null;
 
   return (
     <div className="app">
@@ -122,6 +127,14 @@ export function App() {
         {noteDraft && <NoteEditor key={noteDraft.id || noteDraft.subject.subject_uri} />}
       </Sheet>
 
+      <Sheet open={!!tagsFor} onClose={() => ui.set({ tagsFor: null })} title="Tags">
+        {tagsFor && (
+          <div className="tag-sheet">
+            <p className="facts">{tagsFor.title}{tagsFor.subtitle ? ` · ${tagsFor.subtitle}` : ''}</p>
+            <TagEditor subject={tagsFor} compact />
+          </div>
+        )}
+      </Sheet>
       <Sheet open={lyrics} onClose={() => ui.set({ lyrics: false })} title="Lyrics">
         {lyrics && <LyricsSheet />}
       </Sheet>

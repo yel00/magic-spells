@@ -55,6 +55,18 @@ remote, so nothing here streams or stores music.
   on or mixed, each of which opens on Spotify. Artist pages list band members
   the same way. Record labels and genres are tappable and open everything
   Spotify files under them
+- Music maps (Discover tab, and the Map button on artist pages):
+  - Similar-artist map: closer means more alike; tap a name to play it, open
+    it, re-centre the map on it or start a mix
+  - Your music map: the artists you play, follow, like and playlist, sized by
+    how much you play them and coloured by neighbourhood, with nearby artists
+    you don't have yet marked as recommendations and playable as a mix. A
+    playlist can be highlighted on the map
+  - Genre map: about 1,400 genres, what each is a kind of and what it grew
+    out of, with search and links to Spotify's artists for each genre
+- Personal tags on any album, artist or song; browse them under Library →
+  Tags, combine several, play the matching songs or save them as a playlist.
+  Tags sync between devices alongside notes
 - Versions: an artist's remasters and deluxe editions are folded into one
   entry per album, with a Versions list on the album page. "Find every
   version of this song" lists the artist's other takes and covers that
@@ -190,6 +202,27 @@ need a scheduled server job and are not built yet.
   Lyrics are only used when they belong to a recording of the same length
   (within three seconds), so a live version's timing is never applied to the
   studio track. LRCLIB is community-sourced, not a licensed lyrics service.
+
+## How the maps and tags work
+
+- **Similarity** comes from Last.fm (if `LASTFM_API_KEY` is set) or
+  ListenBrainz. Each artist's list of similar artists carries a score; the
+  map treats that score as how strongly two names pull together.
+- **Your music map** reads your most-played artists over three time ranges,
+  who you follow, your liked songs and the playlists you own, and combines
+  them into one weight per artist. The hundred heaviest are drawn. An artist
+  you don't have is recommended only if it sits near at least two you do.
+  The first build makes about a hundred similarity lookups; the result is
+  kept on the device for a week.
+- **The genre map** is built from Wikidata, which is free to reuse, by
+  `scripts/build-genres.mjs`. The generated file is committed, so the app
+  never contacts Wikidata. Wikidata's genre links are incomplete: about half
+  the genres have no recognised family and sit uncoloured.
+- **Links out**: artist maps link to Music-Map, and genre pages to Cratto and
+  Musicmap. None of those sites offers its data for reuse, so they are linked,
+  not copied.
+- **Tags** are stored like notes: on the device first, then synced through
+  `api/notes.js?kind=tags` into a `tags` table created on first use.
 
 ## How versions and reviews work
 

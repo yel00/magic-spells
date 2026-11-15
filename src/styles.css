@@ -519,3 +519,19 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 .genre-card { max-height: 44vh; overflow-y: auto; }
 .genre-rel { display: flex; flex-direction: column; gap: 6px; }
 .genre-card a.btn { text-decoration: none; }
+
+/* ---- Personal tags ---- */
+.tag-editor { display: flex; flex-direction: column; gap: 12px; }
+.tag-chip { padding: 0 4px 0 14px; gap: 4px; text-transform: none; background: rgba(201, 182, 255, 0.16); color: var(--accent); }
+.tag-chip button:first-child { color: inherit; }
+.tag-x { width: 30px; height: 30px; color: var(--muted); font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.tag-add { display: inline-flex; align-items: center; height: 34px; padding: 0 6px 0 14px; border-radius: 17px; border: 1px dashed rgba(255, 255, 255, 0.22); }
+.tag-add input { width: 118px; height: 100%; background: none; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 13px; -webkit-user-select: text; user-select: text; }
+.tag-go { color: var(--accent); font-size: 13px; font-weight: 600; padding: 0 8px; height: 100%; }
+.tag-suggest .chip { height: 30px; font-size: 12px; }
+.tag-sheet { display: flex; flex-direction: column; gap: 12px; padding-bottom: 8px; }
+.tag-cloud { padding: 0 var(--gutter); }
+.chip-on { background: var(--text); color: var(--bg); }
+.chip-count { margin-left: 8px; font-size: 11px; opacity: 0.6; }
+.tag-actions { padding: 4px var(--gutter) 8px; }
+.tag-browser .chip { text-transform: none; }

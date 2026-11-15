@@ -11,6 +11,7 @@ import { SimilarShelf, Videos } from '../components/Discover';
 import { AlbumVersions } from '../components/Versions';
 import { groupEditions } from '../spotify/editions';
 import { NotesSection } from '../components/Notes';
+import { TagEditor } from '../components/Tags';
 import { Card, Shelf, Status } from '../components/Shelf';
 import { TrackRow } from '../components/TrackRow';
 import { popularTracks } from '../discover';
@@ -130,6 +131,7 @@ export function AlbumView({ id }: { id: string }) {
           </div>
         ))}
       </div>
+      <section className="about"><TagEditor subject={{ subject_uri: a.uri, title: a.name, subtitle: names(a.artists), image: pickImage(a.images, 150) || null }} /></section>
       <AlbumVersions album={a} />
       <NotesSection subject={{ subject_uri: a.uri, parent_uri: null, title: a.name, subtitle: names(a.artists), image: pickImage(a.images, 150) || null }} />
       {info.loading && <section className="about"><AboutSkeleton /></section>}
@@ -212,6 +214,7 @@ export function ArtistView({ id }: { id: string }) {
       )}
       <SimilarShelf name={a.name} title="Similar artists" />
       <Videos query={`${a.name} live`} title="Live" />
+      <section className="about"><TagEditor subject={{ subject_uri: a.uri, title: a.name, subtitle: '', image: pickImage(a.images, 150) || null }} /></section>
       <NotesSection subject={{ subject_uri: a.uri, parent_uri: null, title: a.name, subtitle: 'Artist', image: pickImage(a.images, 150) || null }} />
     </div>
   );
