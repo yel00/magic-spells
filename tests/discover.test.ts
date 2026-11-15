@@ -54,8 +54,8 @@ describe('mapLimit', () => {
 describe('server shaping', () => {
   it('reads Last.fm similar artists and drops weak matches', () => {
     const json = { similarartists: { artist: [{ name: 'A', mbid: 'm1', match: '0.9' }, { name: 'B', mbid: '', match: '0.5' }, { name: 'C', match: '0.01' }] } };
-    expect(shapeLastfmSimilar(json)).toEqual([{ name: 'A', mbid: 'm1' }, { name: 'B', mbid: undefined }]);
-    expect(shapeLastfmSimilar({ similarartists: { artist: { name: 'Solo', match: '1' } } })).toEqual([{ name: 'Solo', mbid: undefined }]);
+    expect(shapeLastfmSimilar(json)).toEqual([{ name: 'A', mbid: 'm1', match: 0.9 }, { name: 'B', mbid: undefined, match: 0.5 }]);
+    expect(shapeLastfmSimilar({ similarartists: { artist: { name: 'Solo', match: '1' } } })).toEqual([{ name: 'Solo', mbid: undefined, match: 1 }]);
     expect(shapeLastfmSimilar({ error: 6 })).toEqual([]);
   });
   it('reads YouTube results and unescapes titles', () => {

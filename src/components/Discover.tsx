@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { buildArtistMix, buildSurpriseMix, findOnSpotify, findVideos, similarArtists, VideosNotConfigured, youtubeSearchUrl, type Mix, type Video } from '../discover';
+import { buildArtistMix, buildNamesMix, buildSurpriseMix, findOnSpotify, findVideos, similarArtists, VideosNotConfigured, youtubeSearchUrl, type Mix, type Video } from '../discover';
 import { mapLimit } from '../discover/mix';
 import { norm } from '../enrich/text';
 import { formatDuration } from '../lib/format';
@@ -77,7 +77,10 @@ export function VideoSheet({ video }: { video: Video }) {
   );
 }
 
-export type MixRequest = { kind: 'artist'; seed: string } | { kind: 'surprise'; seeds: string[]; known: string[] };
+export type MixRequest =
+  | { kind: 'artist'; seed: string }
+  | { kind: 'surprise'; seeds: string[]; known: string[] }
+  | { kind: 'names'; title: string; description: string; names: string[] };
 
 export function MixSheet({ request }: { request: MixRequest }) {
   const [mix, setMix] = useState<Mix | null>(null);
@@ -89,7 +92,12 @@ export function MixSheet({ request }: { request: MixRequest }) {
   useEffect(() => {
     let live = true;
     const onProgress = (d: number, t: number) => live && setProgress([d, t]);
-    const job = request.kind === 'artist' ? buildArtistMix(request.seed, onProgress) : buildSurpriseMix(request.seeds, new Set(request.known), onProgress);
+    const job =
+      request.kind === 'artist'
+        ? buildArtistMix(request.seed, onProgress)
+        : request.kind === 'names'
+          ? buildNamesMix(request.title, request.description, request.names, onProgress)
+          : buildSurpriseMix(request.seeds, new Set(request.known), onProgress);
     job.then(
       (m) => live && (m ? setMix(m) : setFailed('Not enough is known about similar artists to build a mix here.')),
       () => live && setFailed('Couldn’t build the mix just now.'),

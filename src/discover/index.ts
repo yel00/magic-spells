@@ -13,6 +13,13 @@ import { assembleMix, mapLimit } from './mix';
 export interface SimilarResult {
   source: string;
   names: string[];
+  /** How similar each name is, 0–1, in the same order as `names`. Missing on results saved before maps existed. */
+  weights?: number[];
+}
+
+/** Similarity for the i-th name: the source's own score, or a guess from its rank. */
+export function weightAt(r: SimilarResult, i: number): number {
+  return r.weights?.[i] ?? Math.max(0.15, 1 - i / Math.max(r.names.length, 1));
 }
 
 const LB_ALGORITHM = 'session_based_days_7500_session_300_contribution_5_threshold_10_limit_100_filter_True_skip_30';
@@ -23,8 +30,8 @@ async function fromLastfm(name: string): Promise<SimilarResult | null | 'unavail
     if (!res.headers.get('content-type')?.includes('json')) return 'unavailable';
     if (res.status === 404) return null;
     if (!res.ok) return 'unavailable';
-    const data = (await res.json()) as { source: string; artists: { name: string }[] };
-    return { source: data.source, names: data.artists.map((a) => a.name) };
+    const data = (await res.json()) as { source: string; artists: { name: string; match?: number }[] };
+    return { source: data.source, names: data.artists.map((a) => a.name), weights: data.artists.map((a, i) => a.match ?? Math.max(0.15, 1 - i / data.artists.length)) };
   } catch {
     return 'unavailable';
   }
@@ -36,13 +43,15 @@ async function fromListenBrainz(name: string): Promise<SimilarResult | null> {
   const res = await fetch(`https://labs.api.listenbrainz.org/similar-artists/json?artist_mbids=${info.mbid}&algorithm=${LB_ALGORITHM}`);
   if (!res.ok) throw new Error(`ListenBrainz ${res.status}`);
   const list = (await res.json()) as { name: string; score: number }[];
-  const names = list.sort((a, b) => b.score - a.score).slice(0, 20).map((a) => a.name);
-  return names.length ? { source: 'ListenBrainz', names } : null;
+  const top = list.sort((a, b) => b.score - a.score).slice(0, 20);
+  const max = top[0]?.score || 1;
+  // ListenBrainz scores are raw counts; scale them so the closest artist is 1.
+  return top.length ? { source: 'ListenBrainz', names: top.map((a) => a.name), weights: top.map((a) => Math.round((a.score / max) * 1000) / 1000) } : null;
 }
 
 export function similarArtists(name: string): Promise<SimilarResult | null> {
   if (isDemo()) return demoSimilar(name);
-  return cached(`similar:${norm(name)}`, async () => {
+  return cached(`similar2:${norm(name)}`, async () => {
     const lastfm = await fromLastfm(name);
     if (lastfm !== 'unavailable' && lastfm?.names.length) return lastfm;
     try {
@@ -139,6 +148,19 @@ export async function buildSurpriseMix(seeds: string[], known: Set<string>, onPr
   const tracks = assembleMix([], others);
   if (tracks.length < 4) return null;
   return { title: 'New to you', description: `Made by Magic Spells: artists near ${seeds.slice(0, 3).join(', ')} that you don’t follow yet.`, tracks };
+}
+
+/** A mix drawn from a given list of artists (used for the map's recommendations). */
+export async function buildNamesMix(title: string, description: string, names: string[], onProgress?: (done: number, total: number) => void): Promise<Mix | null> {
+  let done = 0;
+  const picked = names.slice(0, 18);
+  const others = await mapLimit(picked, 3, async (n) => {
+    const t = await popularTracks(n).catch(() => null);
+    onProgress?.(++done, picked.length);
+    return t || [];
+  });
+  const tracks = assembleMix([], others);
+  return tracks.length >= 4 ? { title, description, tracks } : null;
 }
 
 // ---- Videos -------------------------------------------------------------------

@@ -481,3 +481,35 @@ main:has(.tabplayer) { padding-bottom: 0; overflow: hidden; }
 .credit-group .score { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; row-gap: 5px; align-items: baseline; }
 .song-versions .version { width: 100%; }
 .song-versions .credit-group h3 { margin-bottom: 4px; }
+
+/* ---- Music maps ---- */
+main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
+.mapview { height: 100%; display: flex; flex-direction: column; padding-bottom: calc(var(--tabs-h) + var(--mini-h) + var(--safe-bottom) + 14px); }
+.map-title { font: 600 20px var(--serif); }
+.map-canvas { position: relative; flex: 1; min-height: 0; margin: 0 8px; border-radius: 14px; background: radial-gradient(circle at 50% 45%, #1b1930 0%, #101014 70%); overflow: hidden; touch-action: none; cursor: grab; }
+.map-canvas svg { display: block; }
+.map-edge { stroke: #c9b6ff; stroke-width: 1; }
+.map-edge-hot { stroke: #ffd98a; stroke-width: 1.5; }
+.map-node { cursor: pointer; }
+.map-node text { font-family: var(--sans); pointer-events: none; }
+.map-pill { fill: rgba(23, 23, 28, 0.82); }
+.map-node-on .map-pill { fill: #2c2c36; stroke: #ffffff; stroke-width: 1.2; stroke-dasharray: none; }
+.map-zoom { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.map-zoom button { width: 38px; height: 38px; border-radius: 19px; background: rgba(33, 33, 40, 0.92); font-size: 19px; display: flex; align-items: center; justify-content: center; }
+.map-foot { padding: 10px var(--gutter) 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.map-foot a { color: var(--accent); text-decoration: none; }
+.map-card { margin: 10px 8px 0; padding: 12px 14px; border-radius: 14px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; }
+.map-card-head { display: flex; align-items: center; gap: 8px; }
+.map-card-head .row-sub { white-space: normal; }
+.map-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.map-tools { display: flex; align-items: center; gap: 8px; padding: 0 var(--gutter) 10px; overflow-x: auto; scrollbar-width: none; }
+.map-tools::-webkit-scrollbar { display: none; }
+.map-tools select { height: 36px; max-width: 46vw; padding: 0 12px; border-radius: 18px; border: 0; background: var(--surface-2); color: var(--text); font: 600 14px var(--sans); }
+.map-toggle { height: 36px; flex: none; max-width: none; color: var(--muted) !important; }
+.map-toggle.on { color: var(--gold) !important; }
+.map-building { padding: 18px var(--gutter); max-width: 520px; }
+@media (min-width: 820px) {
+  .mapview { padding-bottom: calc(var(--mini-h) + var(--safe-bottom) + 24px); }
+  .map-canvas { margin: 0 var(--gutter); }
+  .map-card { margin: 10px var(--gutter) 0; max-width: 560px; }
+}

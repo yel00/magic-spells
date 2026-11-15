@@ -36,6 +36,13 @@ export function DiscoverView() {
         </span>
         <span className="concert-go">Open</span>
       </button>
+      <button className="concert-teaser" onClick={() => go('/map')}>
+        <span className="row-text">
+          <span className="row-title">Your music map</span>
+          <span className="row-sub">See how the artists you play fit together, and who sits just outside</span>
+        </span>
+        <span className="concert-go">Open</span>
+      </button>
       <Status loading={waiting} error={top.error} />
       {!waiting && seeds.length === 0 && (
         <p className="status">Play some music first — suggestions here are built from the artists you listen to most.</p>

@@ -147,6 +147,8 @@ export const savedTracks = () => getList<Paging<{ track: Track }>>('/me/tracks',
 export const followedArtists = () =>
   getList<{ artists: Paging<Artist> }>('/me/following', { type: 'artist', limit: 50 }).then((r) => r.artists);
 export const topArtists = () => getList<Paging<Artist>>('/me/top/artists', { limit: 20, time_range: 'medium_term' });
+export const topArtistsRange = (range: 'short_term' | 'medium_term' | 'long_term') =>
+  getList<Paging<Artist>>('/me/top/artists', { limit: 50, time_range: range });
 export const topTracks = () => getList<Paging<Track>>('/me/top/tracks', { limit: 20, time_range: 'short_term' });
 
 export const saveToLibrary = (uris: string[]) => request<null>('PUT', '/me/library', { body: { uris } });
@@ -189,7 +191,7 @@ export async function artistAlbums(id: string): Promise<Paging<AlbumRef>> {
   return { items, next: null, total: items.length };
 }
 export const playlist = (id: string) => get<Playlist>(`/playlists/${id}`);
-export const playlistItems = (id: string) => get<Paging<PlaylistEntry>>(`/playlists/${id}/items`, { limit: 50 });
+export const playlistItems = (id: string) => getList<Paging<PlaylistEntry>>(`/playlists/${id}/items`, { limit: 50 });
 
 // Spotify caps search at 10 results per type for personal apps.
 export const search = (q: string) =>

@@ -49,6 +49,13 @@ export function BrowseView({ kind, name }: { kind: 'label' | 'genre'; name: stri
           ? (items as AlbumRef[]).map((a) => <Card key={a.id} title={a.name} subtitle={`${names(a.artists)} · ${year(a.release_date)}`} images={a.images} to={`/album/${a.id}`} />)
           : (items as Artist[]).map((a) => <Card key={a.id} title={a.name} images={a.images} to={`/artist/${a.id}`} round />)}
       </Grid>
+      {kind === 'genre' && (
+        <p className="fineprint">
+          Where this genre sits among the others:{' '}
+          <a className="link-quiet inline" href="https://cratto.app/genres" target="_blank" rel="noreferrer">Cratto genre map ↗</a>{' · '}
+          <a className="link-quiet inline" href="https://musicmap.info" target="_blank" rel="noreferrer">Musicmap ↗</a>
+        </p>
+      )}
       {!done && items.length > 0 && items.length < Math.min(total, 1000) && (
         <button className="btn btn-quiet more" onClick={more} disabled={busy}>{busy ? 'Loading…' : 'Show more'}</button>
       )}

@@ -16,7 +16,7 @@ export function shapeLastfmSimilar(json, limit = 20) {
   return arr
     .filter((a) => a?.name && Number(a.match) > 0.05)
     .slice(0, limit)
-    .map((a) => ({ name: a.name, mbid: a.mbid || undefined }));
+    .map((a) => ({ name: a.name, mbid: a.mbid || undefined, match: Math.round(Number(a.match) * 1000) / 1000 }));
 }
 
 /** YouTube search.list -> [{ id, title, channel, thumb }] */

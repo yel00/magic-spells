@@ -166,6 +166,7 @@ export function ArtistView({ id }: { id: string }) {
     <div className="page">
       <Hero images={a.images} round kicker="Artist" title={a.name} uri={a.uri} lines={[(a.genres?.length ? a.genres : info.data ? info.data.genres : []).slice(0, 3).join(' · ')]}>
         <button className="btn" onClick={() => ui.set({ mix: { kind: 'artist', seed: a.name } })}>Mix</button>
+        <button className="btn" onClick={() => go(`/map/${encodeURIComponent(a.name)}`)}>Map</button>
         <SaveButton uri={a.uri} cacheKey="library:artists" labels={['Follow', 'Unfollow']} />
       </Hero>
       {!!popular.data?.length && (
