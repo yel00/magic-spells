@@ -110,13 +110,13 @@ export function artistPhotos(articleUrl: string): Promise<Picture[] | null> {
 }
 
 /** Stand-in pictures for the demo library. */
-export function demoPictures(kind: 'album' | 'artist', name: string): Picture[] {
-  const labels = kind === 'album' ? ['Back cover', 'Booklet', 'Booklet', 'Disc'] : ['On stage, Demo City', 'In the studio', 'Tour poster'];
+export function demoPictures(kind: 'album' | 'artist' | 'poster', name: string): Picture[] {
+  const labels = kind === 'album' ? ['Back cover', 'Booklet', 'Booklet', 'Disc'] : kind === 'poster' ? ['Harbor Hall · 2019', 'Flyer · Summer Stage · 2021'] : ['On stage, Demo City', 'In the studio'];
   const colours = [['#3b2a6b', '#c9b6ff'], ['#0f4c5c', '#9ad1d4'], ['#6b2a3b', '#ffb4a2'], ['#4b3b1a', '#ffd98a']];
   return labels.map((label, i) => {
     const [a, b] = colours[(name.length + i) % colours.length];
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${kind === 'album' ? '600 600' : '800 600'}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="#15151a"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="52%" font-family="Georgia,serif" font-size="44" fill="${b}" text-anchor="middle">${label}</text></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${kind === 'album' ? '600 600' : kind === 'poster' ? '600 850' : '800 600'}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="#15151a"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="52%" font-family="Georgia,serif" font-size="44" fill="${b}" text-anchor="middle">${label}</text></svg>`;
     const url = 'data:image/svg+xml,' + encodeURIComponent(svg);
-    return { thumb: url, full: url, label, source: 'Demo image' };
+    return { thumb: url, full: url, label, source: kind === 'poster' ? 'Demo poster' : 'Demo image' };
   });
 }

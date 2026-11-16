@@ -48,3 +48,21 @@ describe('photos from a Wikipedia article', () => {
     expect(shapePhotos({})).toEqual([]);
   });
 });
+
+describe('gig posters from the Event Art Archive', () => {
+  it('lists an artist’s gigs most recent first, undated last', async () => {
+    const { gigsFrom } = await import('../src/enrich/posters');
+    const gigs = gigsFrom({ events: [{ id: 'a', name: 'Old show', 'life-span': { begin: '1998-04-06' } }, { id: 'b', name: 'Undated' }, { id: 'c', name: 'New show', 'life-span': { begin: '2016-08-11' } }, { name: 'no id' }] });
+    expect(gigs.map((g) => g.id)).toEqual(['c', 'a', 'b']);
+    expect(gigsFrom({})).toEqual([]);
+  });
+  it('labels each picture with its gig and year, and says when it is a flyer or ticket', async () => {
+    const { shapeEventArt } = await import('../src/enrich/posters');
+    const gig = { id: '9a39f040-d094-4d40-8dd8-bc5683913f8c', name: 'Night of the Prog Festival XIV', date: '2019-07-19' };
+    const img = (types: string[], over: any = {}) => ({ types, image: 'http://eventartarchive.org/event/x/1.jpg', approved: true, thumbnails: { 500: 'http://eventartarchive.org/event/x/1-500.jpg', 1200: 'http://eventartarchive.org/event/x/1-1200.jpg' }, ...over });
+    const pictures = shapeEventArt({ images: [img(['Poster']), img(['Ticket']), img(['Flyer'], { approved: false })] }, gig);
+    expect(pictures.map((p) => p.label)).toEqual(['Night of the Prog Festival XIV · 2019', 'Ticket · Night of the Prog Festival XIV · 2019']);
+    expect(pictures[0]).toMatchObject({ thumb: 'https://eventartarchive.org/event/x/1-500.jpg', full: 'https://eventartarchive.org/event/x/1-1200.jpg', source: 'Event Art Archive', link: `https://musicbrainz.org/event/${gig.id}` });
+    expect(shapeEventArt({}, gig)).toEqual([]);
+  });
+});

@@ -67,7 +67,8 @@ remote, so nothing here streams or stores music.
   borrowed from it; tap one to play it
 - Artwork and photos: an album's back cover, booklet and disc art in a
   swipeable strip; photographs on artist pages; tap any picture to see it
-  large. Concert listings show the event's promotional image
+  large. Artist pages also show gig posters where the Event Art Archive has
+  any (few artists do). Concert listings show the event's promotional image
 - Music maps (Discover tab, and the Map button on artist pages):
   - Similar-artist map: closer means more alike; tap a name to play it, open
     it, re-centre the map on it or start a mix

@@ -10,6 +10,7 @@ import { ChevronLeft, HeartIcon, PlayIcon, ShuffleIcon } from '../components/Ico
 import { SimilarShelf, Videos } from '../components/Discover';
 import { Gallery } from '../components/Gallery';
 import { albumArtwork, artistPhotos, demoPictures, releaseIdFrom } from '../enrich/artwork';
+import { artistPosters } from '../enrich/posters';
 import { AlbumVersions } from '../components/Versions';
 import { groupEditions } from '../spotify/editions';
 import { NotesSection } from '../components/Notes';
@@ -171,6 +172,10 @@ export function ArtistView({ id }: { id: string }) {
   const photos = useData(a && (bioUrl || isDemo()) ? `photos:${id}` : null, () =>
     isDemo() ? Promise.resolve(demoPictures('artist', a!.name)) : artistPhotos(bioUrl!).then((v) => v ?? []),
   );
+  const mbid = info.data ? info.data.mbid : undefined;
+  const posters = useData(a && (mbid || isDemo()) ? `posters:${id}` : null, () =>
+    isDemo() ? Promise.resolve(demoPictures('poster', a!.name)) : artistPosters(mbid!).then((v) => v ?? []),
+  );
   const popular = useData(a ? `popular:${id}` : null, () => popularTracks(a!.name).then((v) => v ?? []));
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
   // One card per album: remasters and deluxe editions are folded together.
@@ -227,6 +232,7 @@ export function ArtistView({ id }: { id: string }) {
         </section>
       )}
       <Gallery title="Photos" pictures={photos.data || []} />
+      <Gallery title="Posters" pictures={posters.data || []} tall />
       <SimilarShelf name={a.name} title="Similar artists" />
       <Videos query={`${a.name} live`} title="Live" />
       <section className="about"><TagEditor subject={{ subject_uri: a.uri, title: a.name, subtitle: '', image: pickImage(a.images, 150) || null }} /></section>

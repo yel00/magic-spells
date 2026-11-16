@@ -147,3 +147,15 @@ describe('live artwork', () => {
     expect(await albumArtwork('00000000-0000-4000-8000-000000000000')).toBeNull();
   }, 60_000);
 });
+
+describe('live posters', () => {
+  it('finds posters for an artist who has some, and nothing for one who has none', async () => {
+    const { artistPosters } = await import('../src/enrich/posters');
+    // An artist with a gig that is known to have a poster on file.
+    const found = await artistPosters('a0644021-9bcb-4af0-bea4-15bdd426564f');
+    console.log('posters for Ivy Blue:', found?.length, found?.slice(0, 3).map((p) => p.label).join(' | '), '|', found?.[0]?.thumb);
+    expect(found?.length).toBeGreaterThan(0);
+    const none = await artistPosters('a74b1b7f-71a5-4011-9441-d0b5e4122711');
+    console.log('posters for Radiohead:', none?.length ?? 0);
+  }, 180_000);
+});

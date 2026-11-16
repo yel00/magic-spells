@@ -605,3 +605,6 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 .viewer-foot a { color: var(--accent); text-decoration: none; }
 .concert-with-art { flex-wrap: wrap; padding-top: 0; overflow: hidden; }
 .concert-art { flex: 0 0 calc(100% + 28px); width: calc(100% + 28px); margin: 0 -14px 12px; aspect-ratio: 16 / 7; object-fit: cover; background: var(--surface-2); }
+/* Posters are portrait: show the whole sheet rather than a square crop. */
+.gallery-tall .gallery-item { width: 150px; }
+.gallery-tall .gallery-item img { width: 150px; height: 212px; object-fit: contain; background: #0b0b0e; }

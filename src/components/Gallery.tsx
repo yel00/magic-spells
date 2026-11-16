@@ -3,10 +3,10 @@ import { useStore } from '../lib/store';
 import { ui } from '../state/ui';
 
 /** A strip of pictures; tapping one opens it large. */
-export function Gallery({ title, pictures }: { title: string; pictures: Picture[] }) {
+export function Gallery({ title, pictures, tall }: { title: string; pictures: Picture[]; tall?: boolean }) {
   if (!pictures.length) return null;
   return (
-    <section className="shelf gallery">
+    <section className={`shelf gallery ${tall ? 'gallery-tall' : ''}`}>
       <h2>{title}</h2>
       <div className="shelf-scroll">
         {pictures.map((p, i) => (
