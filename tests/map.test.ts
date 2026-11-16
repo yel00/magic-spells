@@ -133,3 +133,22 @@ describe('genre data file', () => {
     for (const must of ['jazz', 'rock', 'hip-hop', 'shoegaze', 'bebop', 'techno']) expect(names.has(must)).toBe(true);
   });
 });
+
+describe('leaving things off the map', () => {
+  it('drops removed artists from the library, however they are written', async () => {
+    const { scoreLibrary } = await import('../src/map/library');
+    const input = { top: [['Raffi', 'Radiohead']], followed: ['Björk'], liked: [], playlists: [] };
+    expect(scoreLibrary(input, new Set(['raffi', 'bjork'])).map((a) => a.name)).toEqual(['Radiohead']);
+    expect(scoreLibrary(input).map((a) => a.name)).toEqual(['Raffi', 'Radiohead', 'Björk']);
+  });
+  it('adds and restores artists and playlists without duplicates', async () => {
+    const { withArtist, withPlaylist } = await import('../src/map/exclude');
+    let e = { playlists: [] as string[], artists: [] as { key: string; name: string }[] };
+    e = withArtist(withArtist(e, 'Björk', true), 'bjork', true);
+    expect(e.artists).toEqual([{ key: 'bjork', name: 'bjork' }]);
+    e = withPlaylist(withPlaylist(e, 'Kids', true), 'Kids', true);
+    expect(e.playlists).toEqual(['Kids']);
+    expect(withArtist(e, 'BJÖRK', false).artists).toEqual([]);
+    expect(withPlaylist(e, 'Kids', false).playlists).toEqual([]);
+  });
+});

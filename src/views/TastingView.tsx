@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Art } from '../components/Art';
-import { ChevronLeft, HeartIcon, PlayIcon } from '../components/Icons';
+import { ChevronLeft, HeartIcon, PlayIcon, SearchIcon } from '../components/Icons';
 import { Status } from '../components/Shelf';
 import { names } from '../lib/format';
 import { go } from '../lib/router';
@@ -24,6 +24,7 @@ function Head({ title, kicker }: { title: string; kicker: string }) {
   );
 }
 
+const MAX_SEEDS = 6;
 const day = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
 /** Start a new tasting, or reopen an earlier one. */
@@ -32,27 +33,46 @@ function NewTasting() {
   const recent = useData('home:recent', api.recentlyPlayed);
   const liked = useData('library:tracks', api.savedTracks);
   const past = useStore(tastings).sessions;
-  const [chosen, setChosen] = useState<string[]>([]);
+  // The chosen songs are kept whole, so one found by search stays chosen after the search is cleared.
+  const [picked, setPicked] = useState<Track[]>([]);
+  const [text, setText] = useState('');
+  const [query, setQuery] = useState('');
   const [note, setNote] = useState('');
   const [count, setCount] = useState(4);
   const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<TastingError | null>(null);
 
-  const choices = seedChoices([top.data?.items || [], (recent.data?.items || []).map((h) => h.track), (liked.data?.items || []).map((i) => i.track)]);
+  useEffect(() => {
+    const id = setTimeout(() => setQuery(text.trim()), 300);
+    return () => clearTimeout(id);
+  }, [text]);
+  const found = useData(query ? `search:${query.toLowerCase()}` : null, () => api.search(query));
+
+  const suggestions = seedChoices([top.data?.items || [], (recent.data?.items || []).map((h) => h.track), (liked.data?.items || []).map((i) => i.track)]);
+  const results = (found.data?.tracks?.items || []).filter(Boolean);
   const loading = top.loading && recent.loading && liked.loading;
-  const toggle = (uri: string) => setChosen((cur) => (cur.includes(uri) ? cur.filter((u) => u !== uri) : cur.length >= 6 ? cur : [...cur, uri]));
+  const isPicked = (t: Track) => picked.some((p) => p.uri === t.uri);
+  const full = picked.length >= MAX_SEEDS;
+  const toggle = (t: Track) => setPicked((cur) => (cur.some((p) => p.uri === t.uri) ? cur.filter((p) => p.uri !== t.uri) : cur.length >= MAX_SEEDS ? cur : [...cur, t]));
 
   const start = async () => {
     setError(null);
-    const seeds = choices.filter((t) => chosen.includes(t.uri)).map(seedFrom);
     try {
-      const session = await runTasting(seeds, note.trim(), count, setStep);
+      const session = await runTasting(picked.map(seedFrom), note.trim(), count, setStep);
       go(`/tasting/${session.id}`);
     } catch (e) {
       setError(e instanceof TastingError ? e : new TastingError('The session couldn’t be run. Please try again.'));
     }
     setStep(null);
   };
+
+  const row = (t: Track) => (
+    <button key={t.uri} className={`seed ${isPicked(t) ? 'seed-on' : ''}`} aria-pressed={isPicked(t)} disabled={full && !isPicked(t)} onClick={() => toggle(t)}>
+      <Art images={t.album?.images} size={40} />
+      <span className="row-text"><span className="row-title">{t.name}</span><span className="row-sub">{names(t.artists)}</span></span>
+      <span className="seed-tick">{isPicked(t) ? '✓' : '+'}</span>
+    </button>
+  );
 
   return (
     <div className="page">
@@ -72,30 +92,45 @@ function NewTasting() {
       ) : (
         <>
           <section className="about">
-            <h2>Start from {chosen.length ? `${chosen.length} song${chosen.length === 1 ? '' : 's'}` : 'songs you like'}</h2>
-            <Status loading={loading} empty={!loading && !choices.length && 'Play or like some songs first, so there is something to start from.'} />
-            <div className="seed-list">
-              {choices.map((t) => (
-                <button key={t.uri} className={`seed ${chosen.includes(t.uri) ? 'seed-on' : ''}`} aria-pressed={chosen.includes(t.uri)} onClick={() => toggle(t.uri)}>
-                  <Art images={t.album?.images} size={40} />
-                  <span className="row-text"><span className="row-title">{t.name}</span><span className="row-sub">{names(t.artists)}</span></span>
-                  <span className="seed-tick">{chosen.includes(t.uri) ? '✓' : ''}</span>
-                </button>
-              ))}
-            </div>
-            {choices.length > 0 && (
+            <h2>{picked.length ? `Starting from ${picked.length} song${picked.length === 1 ? '' : 's'}` : 'Choose songs to start from'}</h2>
+            {picked.length > 0 && (
+              <div className="chips picked">
+                {picked.map((t) => (
+                  <span key={t.uri} className="chip tag-chip">
+                    <span>{t.name} · {t.artists[0]?.name}</span>
+                    <button className="tag-x" onClick={() => toggle(t)} aria-label={`Remove ${t.name}`}>✕</button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <label className="searchbox seed-search">
+              <SearchIcon size={18} />
+              <input type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder="Search for any song" autoCorrect="off" autoCapitalize="off" spellCheck={false} enterKeyHint="search" />
+            </label>
+            {full && <p className="facts">That’s the most a session takes ({MAX_SEEDS}). Remove one to add another.</p>}
+
+            {query ? (
               <>
-                <label className="tasting-note">
-                  Anything in particular you love about them? (optional)
-                  <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={400} placeholder="e.g. the bass lines, how they build" />
-                </label>
-                <div className="segments radius" role="radiogroup" aria-label="How many songs in the flight">
-                  {[3, 4, 5].map((n) => <button key={n} role="radio" aria-checked={count === n} className={count === n ? 'on' : ''} onClick={() => setCount(n)}>{n} songs</button>)}
-                </div>
-                {error && <p className="error" role="alert">{error.message}</p>}
-                <button className="btn btn-primary" onClick={start} disabled={!chosen.length}>{chosen.length ? 'Pour the flight' : 'Choose 1 to 6 songs'}</button>
+                <Status loading={found.loading} error={found.error} empty={found.data && !results.length && `No songs found for “${query}”.`} />
+                <div className="seed-list">{results.map(row)}</div>
+              </>
+            ) : (
+              <>
+                <h3>From what you’ve been playing</h3>
+                <Status loading={loading} empty={!loading && !suggestions.length && 'Nothing to suggest yet. Search for a song above.'} />
+                <div className="seed-list">{suggestions.map(row)}</div>
               </>
             )}
+
+            <label className="tasting-note">
+              Anything in particular you love about them? (optional)
+              <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={400} placeholder="e.g. the bass lines, how they build" />
+            </label>
+            <div className="segments radius" role="radiogroup" aria-label="How many songs in the flight">
+              {[3, 4, 5].map((n) => <button key={n} role="radio" aria-checked={count === n} className={count === n ? 'on' : ''} onClick={() => setCount(n)}>{n} songs</button>)}
+            </div>
+            {error && <p className="error" role="alert">{error.message}</p>}
+            <button className="btn btn-primary" onClick={start} disabled={!picked.length}>{picked.length ? 'Pour the flight' : `Choose 1 to ${MAX_SEEDS} songs`}</button>
           </section>
 
           {past.length > 0 && (

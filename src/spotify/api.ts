@@ -151,10 +151,21 @@ export const topArtistsRange = (range: 'short_term' | 'medium_term' | 'long_term
   getList<Paging<Artist>>('/me/top/artists', { limit: 50, time_range: range });
 export const topTracks = () => getList<Paging<Track>>('/me/top/tracks', { limit: 20, time_range: 'short_term' });
 
-export const saveToLibrary = (uris: string[]) => request<null>('PUT', '/me/library', { body: { uris } });
-export const removeFromLibrary = (uris: string[]) => request<null>('DELETE', '/me/library', { body: { uris } });
+// Spotify's library endpoints take the items in the address (`?uris=a,b,c`), at most 40 at a time,
+// not in the request body.
+const LIBRARY_BATCH = 40;
+
+async function library(method: 'PUT' | 'DELETE', uris: string[]): Promise<null> {
+  for (let i = 0; i < uris.length; i += LIBRARY_BATCH) {
+    await request<null>(method, '/me/library', { query: { uris: uris.slice(i, i + LIBRARY_BATCH).join(',') } });
+  }
+  return null;
+}
+
+export const saveToLibrary = (uris: string[]) => library('PUT', uris);
+export const removeFromLibrary = (uris: string[]) => library('DELETE', uris);
 export const libraryContains = (uris: string[]) =>
-  get<boolean[]>('/me/library/contains', { uris: uris.join(',') }).catch(() => uris.map(() => false));
+  get<boolean[]>('/me/library/contains', { uris: uris.slice(0, LIBRARY_BATCH).join(',') }).catch(() => uris.map(() => false));
 
 // ---- Catalog ----------------------------------------------------------------
 

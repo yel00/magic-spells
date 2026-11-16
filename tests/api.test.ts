@@ -96,7 +96,8 @@ describe('playlist editing', () => {
   it('sends removals, renames and deletion in the shape Spotify now expects', async () => {
     const sent: { method: string; path: string; body: unknown }[] = [];
     vi.stubGlobal('fetch', async (input: URL | string, init?: RequestInit) => {
-      sent.push({ method: init?.method || 'GET', path: new URL(String(input)).pathname.replace('/v1', ''), body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      const u = new URL(String(input));
+      sent.push({ method: init?.method || 'GET', path: u.pathname.replace('/v1', '') + decodeURIComponent(u.search), body: init?.body ? JSON.parse(String(init.body)) : undefined });
       return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
     const api = await import('../src/spotify/api');
@@ -108,7 +109,24 @@ describe('playlist editing', () => {
       { method: 'DELETE', path: '/playlists/p1/items', body: { items: [{ uri: 'spotify:track:a' }] } },
       { method: 'PUT', path: '/playlists/p1', body: { name: 'New name', description: '' } },
       { method: 'PUT', path: '/playlists/p1/items', body: { range_start: 0, insert_before: 3, range_length: 1 } },
-      { method: 'DELETE', path: '/me/library', body: { uris: ['spotify:playlist:p1'] } },
+      { method: 'DELETE', path: '/me/library?uris=spotify:playlist:p1', body: undefined },
     ]);
+  });
+});
+
+describe('saving to the library', () => {
+  it('puts the items in the address, never the body, forty at a time', async () => {
+    const sent: { method: string; uris: string[]; body: unknown }[] = [];
+    vi.stubGlobal('fetch', async (input: URL | string, init?: RequestInit) => {
+      const u = new URL(String(input));
+      sent.push({ method: init?.method || 'GET', uris: (u.searchParams.get('uris') || '').split(','), body: init?.body });
+      return new Response(u.pathname.endsWith('/contains') ? '[true,false]' : '', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    const api = await import('../src/spotify/api');
+    await api.saveToLibrary(['spotify:track:a']);
+    await api.removeFromLibrary(Array.from({ length: 45 }, (_, i) => `spotify:track:t${i}`));
+    expect(await api.libraryContains(['spotify:track:a', 'spotify:track:b'])).toEqual([true, false]);
+    expect(sent.map((s) => [s.method, s.uris.length, s.body])).toEqual([['PUT', 1, undefined], ['DELETE', 40, undefined], ['DELETE', 5, undefined], ['GET', 2, undefined]]);
+    expect(sent[0].uris).toEqual(['spotify:track:a']);
   });
 });

@@ -577,3 +577,14 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 /* ---- Samples and borrowed parts ---- */
 .borrow-label { display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
 .borrow-label span { font-size: 12px; color: var(--muted); }
+
+/* ---- Tasting search, map exclusions ---- */
+.seed-search { margin: 0; }
+.picked .tag-chip { max-width: 100%; }
+.picked .tag-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seed:disabled { opacity: 0.4; }
+.seed-tick { color: var(--muted); }
+.seed-on .seed-tick { color: var(--accent); }
+.map-manage { overflow-y: auto; }
+.map-check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 16px; }
+.map-check input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }

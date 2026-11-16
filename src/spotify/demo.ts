@@ -216,7 +216,9 @@ export async function demoRequest(method: string, url: URL, body: any): Promise<
   if (path === '/me/top/tracks') return page(tracks.filter((_, i) => i % 13 === 1).slice(0, 10));
   if (path === '/me/library/contains') return (q.get('uris') || '').split(',').map((u) => saved.has(u));
   if (path === '/me/library') {
-    (body.uris as string[]).forEach((u) => {
+    // As on Spotify, the items arrive in the address; a request that puts them in the body is rejected.
+    if (!q.get('uris')) throw new ApiError(400, 'Missing required parameter: uris');
+    q.get('uris')!.split(',').forEach((u) => {
       if (method === 'PUT') return void saved.add(u);
       saved.delete(u);
       // Removing a playlist from the library is how a playlist is deleted.

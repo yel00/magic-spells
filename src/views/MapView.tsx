@@ -6,6 +6,7 @@ import { mapLimit } from '../discover/mix';
 import { norm } from '../enrich/text';
 import { go } from '../lib/router';
 import { edgesAmong, recommend, type Recommendation, type SimilarList } from '../map/graph';
+import { loadExclusions, saveExclusions, withArtist, withPlaylist, type Exclusions } from '../map/exclude';
 import { clusters, layout, type MapEdge, type Point } from '../map/layout';
 import { gatherLibrary, type LibraryArtist } from '../map/library';
 import { isDemo } from '../spotify/auth';
@@ -18,11 +19,13 @@ interface Built {
   positions: [string, Point][];
   recs: Recommendation[];
   playlists: string[];
+  /** Every playlist the listener owns, including ones left off the map. */
+  ownedPlaylists?: string[];
   membership: Record<string, string[]>;
   at: number;
 }
 
-function Card({ node, rec, playlists, onClose }: { node: DrawnNode; rec?: Recommendation; playlists?: string[]; onClose: () => void }) {
+function Card({ node, rec, playlists, onClose, onRemove }: { node: DrawnNode; rec?: Recommendation; playlists?: string[]; onClose: () => void; onRemove?: () => void }) {
   const [busy, setBusy] = useState(false);
   const withArtist = async (then: (a: { id: string; uri: string }) => void) => {
     setBusy(true);
@@ -49,6 +52,7 @@ function Card({ node, rec, playlists, onClose }: { node: DrawnNode; rec?: Recomm
         <button className="btn btn-small" disabled={busy} onClick={() => withArtist((a) => go(`/artist/${a.id}`))}>Artist page</button>
         {node.kind !== 'centre' && <button className="btn btn-small" onClick={() => go(`/map/${encodeURIComponent(node.label)}`)}>Map from here</button>}
         <button className="btn btn-small" onClick={() => ui.set({ mix: { kind: 'artist', seed: node.label } })}>Mix</button>
+        {onRemove && <button className="btn btn-quiet btn-small btn-danger" onClick={onRemove}>Remove from map</button>}
       </div>
     </div>
   );
@@ -141,8 +145,8 @@ function loadBuilt(): Built | null {
   }
 }
 
-async function buildLibraryMap(onStep: (label: string, done?: number, total?: number) => void): Promise<Built | null> {
-  const library = await gatherLibrary(onStep);
+async function buildLibraryMap(onStep: (label: string, done?: number, total?: number) => void, exclude: Exclusions): Promise<Built | null> {
+  const library = await gatherLibrary(onStep, exclude);
   if (library.artists.length < 3) return null;
   // The map shows the hundred artists that matter most; all of them count as "known" when recommending.
   const shown = library.artists.slice(0, 100);
@@ -153,7 +157,8 @@ async function buildLibraryMap(onStep: (label: string, done?: number, total?: nu
     onStep('Finding who is close to whom…', ++done, shown.length);
     return { of: a.name, result };
   });
-  const known = new Set(library.artists.map((a) => norm(a.name)));
+  // Artists the listener removed are never recommended back to them.
+  const known = new Set([...library.artists.map((a) => norm(a.name)), ...exclude.artists.map((a) => a.key)]);
   const ids = new Set(shown.map((a) => norm(a.name)));
   const recs = recommend(lists, known, 24).filter((r) => r.because.some((b) => ids.has(norm(b.name))));
   const edges = edgesAmong(lists, ids);
@@ -165,7 +170,7 @@ async function buildLibraryMap(onStep: (label: string, done?: number, total?: nu
   const nodes = [...mine, ...recNodes];
   const all = [...edges, ...recEdges];
   const built: Built = {
-    nodes, edges: all, positions: [...layout(nodes, all)], recs, playlists: library.playlists,
+    nodes, edges: all, positions: [...layout(nodes, all)], recs, playlists: library.playlists, ownedPlaylists: library.ownedPlaylists,
     membership: Object.fromEntries(shown.filter((a) => a.playlists.length).map((a) => [norm(a.name), a.playlists])), at: Date.now(),
   };
   try {
@@ -184,11 +189,14 @@ export function LibraryMapView() {
   const [selected, setSelected] = useState<string | null>(null);
   const [playlist, setPlaylist] = useState('');
   const [showRecs, setShowRecs] = useState(true);
+  const [exclude, setExclude] = useState<Exclusions>(loadExclusions);
+  const [managing, setManaging] = useState(false);
+  const [pending, setPending] = useState<Exclusions | null>(null);
 
-  const build = async () => {
+  const build = async (using: Exclusions = exclude) => {
     setProgress({ label: 'Starting…' });
     setEmpty(false);
-    const b = await buildLibraryMap((label, done, total) => setProgress({ label, done, total })).catch(() => null);
+    const b = await buildLibraryMap((label, done, total) => setProgress({ label, done, total }), using).catch(() => null);
     setProgress(null);
     if (b) setBuilt(b);
     else setEmpty(true);
@@ -210,6 +218,34 @@ export function LibraryMapView() {
   const picked = nodes.find((n) => n.id === selected);
   const rec = built?.recs.find((r) => norm(r.name) === selected);
 
+  // Removing an artist takes effect at once: the name and its links leave the map, and it stays off future rebuilds.
+  const removeArtist = (node: DrawnNode) => {
+    if (!built) return;
+    const next = withArtist(exclude, node.label, true);
+    setExclude(next);
+    saveExclusions(next);
+    const trimmed: Built = { ...built, nodes: built.nodes.filter((n) => n.id !== node.id), edges: built.edges.filter((e) => e.a !== node.id && e.b !== node.id), recs: built.recs.filter((r) => norm(r.name) !== node.id) };
+    setBuilt(trimmed);
+    try {
+      localStorage.setItem(STORE(), JSON.stringify(trimmed));
+    } catch {
+      /* not saved: the next rebuild applies it anyway */
+    }
+    setSelected(null);
+    toast(`${node.label} removed from your map. Restore it under Manage.`);
+  };
+  const draft = pending ?? exclude;
+  const applyManage = () => {
+    setManaging(false);
+    if (!pending) return;
+    setExclude(pending);
+    saveExclusions(pending);
+    setPending(null);
+    setSelected(null);
+    // Leaving a playlist out changes every artist's weight, so the map is rebuilt.
+    build(pending);
+  };
+
   return (
     <Frame kicker="Your music" title="Map">
       {progress && (
@@ -220,7 +256,35 @@ export function LibraryMapView() {
         </div>
       )}
       {empty && !progress && <p className="status">There isn’t enough listening history yet to draw a map. Play, like or follow some artists and try again.</p>}
-      {built && !progress && (
+      {built && !progress && managing && (
+        <section className="about map-manage">
+          <h2>What’s on your map</h2>
+          <p className="facts">Untick a playlist to leave it out, for example a children’s playlist or background noise. The map is rebuilt when you tap Done.</p>
+          {(built.ownedPlaylists || built.playlists).map((name) => (
+            <label key={name} className="map-check">
+              <input type="checkbox" checked={!draft.playlists.includes(name)} onChange={(e) => setPending(withPlaylist(draft, name, !e.target.checked))} />
+              <span>{name}</span>
+            </label>
+          ))}
+          {!(built.ownedPlaylists || built.playlists).length && <p className="facts">You have no playlists of your own on the map.</p>}
+          {draft.artists.length > 0 && (
+            <>
+              <h3>Artists you removed</h3>
+              <div className="chips">
+                {draft.artists.map((a) => (
+                  <button key={a.key} className="chip chip-tap" onClick={() => setPending(withArtist(draft, a.name, false))}>{a.name} · restore</button>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="note-actions">
+            <button className="btn btn-quiet" onClick={() => { setPending(null); setManaging(false); }}>Cancel</button>
+            <span className="spacer" />
+            <button className="btn btn-primary" onClick={applyManage}>{pending ? 'Done, rebuild' : 'Done'}</button>
+          </div>
+        </section>
+      )}
+      {built && !progress && !managing && (
         <>
           <div className="map-tools">
             {built.playlists.length > 0 && (
@@ -230,6 +294,7 @@ export function LibraryMapView() {
               </select>
             )}
             <button className={`pill map-toggle ${showRecs ? 'on' : ''}`} aria-pressed={showRecs} onClick={() => setShowRecs(!showRecs)}>Recommendations</button>
+            <button className="pill map-toggle" onClick={() => setManaging(true)}>Manage</button>
             {built.recs.length > 0 && (
               <button
                 className="pill map-toggle"
@@ -240,11 +305,11 @@ export function LibraryMapView() {
             )}
           </div>
           <MapCanvas nodes={nodes} edges={edges} positions={positions} selected={selected} onSelect={setSelected} />
-          {picked && <Card node={picked} rec={rec} playlists={built.membership[picked.id]} onClose={() => setSelected(null)} />}
+          {picked && <Card node={picked} rec={rec} playlists={built.membership[picked.id]} onClose={() => setSelected(null)} onRemove={() => removeArtist(picked)} />}
           {!picked && (
             <p className="map-foot">
               Bigger names are ones you play more; colours are neighbourhoods. Dashed gold names are recommendations: artists you don’t have that sit near several you do.{' '}
-              <button className="link-quiet inline" onClick={build}>Rebuild</button>
+              <button className="link-quiet inline" onClick={() => build()}>Rebuild</button>
             </p>
           )}
         </>
