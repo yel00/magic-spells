@@ -92,7 +92,7 @@ function NewTasting() {
                 <div className="segments radius" role="radiogroup" aria-label="How many songs in the flight">
                   {[3, 4, 5].map((n) => <button key={n} role="radio" aria-checked={count === n} className={count === n ? 'on' : ''} onClick={() => setCount(n)}>{n} songs</button>)}
                 </div>
-                {error && <p className="error" role="alert">{error.message}{error.notConfigured ? ' Add ANTHROPIC_API_KEY in the server settings to turn this on.' : ''}</p>}
+                {error && <p className="error" role="alert">{error.message}</p>}
                 <button className="btn btn-primary" onClick={start} disabled={!chosen.length}>{chosen.length ? 'Pour the flight' : 'Choose 1 to 6 songs'}</button>
               </>
             )}

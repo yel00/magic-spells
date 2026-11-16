@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 // @ts-expect-error plain JS modules shared with the server function
-import { buildPrompt, cleanRequest, isAllowed, SYSTEM, takeQuota, TastingSchema } from '../api/_lib/tasting.js';
+import { buildPrompt, cleanRequest, isAllowed, readApiKey, status, SYSTEM, takeQuota, TastingSchema } from '../api/_lib/tasting.js';
 import { matchPick, playlistDescription, seedChoices } from '../src/tasting/logic';
 import type { Track } from '../src/spotify/types';
 import type { Pick } from '../src/tasting/types';
@@ -38,6 +38,16 @@ describe('what the app sends', () => {
     expect(TastingSchema.safeParse(guide).success).toBe(true);
     expect(TastingSchema.safeParse({ ...guide, picks: [{ title: 'x' }] }).success).toBe(false);
     expect(SYSTEM).toContain('different genre');
+  });
+});
+
+describe('reading the key from the server settings', () => {
+  it('tidies a pasted key and accepts a couple of other names for the setting', () => {
+    expect(readApiKey({ ANTHROPIC_API_KEY: '  "sk-ant-abc"\n' })).toBe('sk-ant-abc');
+    expect(readApiKey({ CLAUDE_API_KEY: 'sk-ant-xyz' })).toBe('sk-ant-xyz');
+    expect(readApiKey({ ANTHROPIC_API_KEY: '   ' })).toBe('');
+    expect(readApiKey({})).toBe('');
+    expect(status({ ANTHROPIC_API_KEY: 'not-an-anthropic-key' })).toMatchObject({ configured: true, keyLooksRight: false });
   });
 });
 
@@ -141,7 +151,11 @@ describe('the server function', () => {
     ai = () => ({ status: 200, body: message({ stop_reason: 'max_tokens', content: [{ type: 'text', text: '{"title": "cut off' }] }) });
     expect((await call()).code).toBe(502);
     ai = () => ({ status: 401, body: { type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } } });
-    expect(await call()).toMatchObject({ code: 501, data: { error: 'The Anthropic API key was rejected.' } });
+    const rejected = await call();
+    expect(rejected.code).toBe(502);
+    expect(rejected.data.error).toContain('Anthropic rejected the API key (invalid x-api-key)');
+    ai = () => ({ status: 400, body: { type: 'error', error: { type: 'invalid_request_error', message: 'Your credit balance is too low to access the Anthropic API.' } } });
+    expect((await call()).data.error).toContain('credit balance is too low');
     ai = () => ({ status: 429, body: { type: 'error', error: { type: 'rate_limit_error', message: 'slow down' } } });
     expect((await call()).code).toBe(429);
     ai = () => ({ status: 500, body: { type: 'error', error: { type: 'api_error', message: 'internal detail' } } });
@@ -156,7 +170,7 @@ describe('the server function', () => {
     expect((await call({ headers: {} })).code).toBe(401);
     expect((await call({ headers: { authorization: 'Bearer stolen' } })).code).toBe(401);
     expect((await call({ body: { seeds: [] } })).code).toBe(400);
-    expect((await call({ method: 'GET' })).code).toBe(405);
+    expect((await call({ method: 'DELETE' })).code).toBe(405);
     expect(sent).toBeNull();
   });
 
@@ -170,9 +184,40 @@ describe('the server function', () => {
     vi.stubEnv('AI_ALLOWED_USERS', '');
   });
 
-  it('says so when no key is configured', async () => {
+  it('asks again without the hand-off option if the account does not accept it', async () => {
+    const seen: boolean[] = [];
+    ai = (body) => {
+      seen.push('fallbacks' in body);
+      return 'fallbacks' in body
+        ? { status: 400, body: { type: 'error', error: { type: 'invalid_request_error', message: 'fallbacks: Extra inputs are not permitted' } } }
+        : { status: 200, body: message() };
+    };
+    const res = await call();
+    expect(res.code).toBe(200);
+    expect(res.data).toEqual(guide);
+    expect(seen).toEqual([true, false]);
+  });
+
+  it('says so when no key is configured, and reports its state to a browser without revealing the key', async () => {
     vi.stubEnv('ANTHROPIC_API_KEY', '');
-    expect((await call()).code).toBe(501);
+    const none = await call();
+    expect(none.code).toBe(501);
+    expect(none.data.error).toContain('No Anthropic key is set');
+    expect((await call({ method: 'GET' })).data).toMatchObject({ configured: false, keyLooksRight: null });
+    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-secret-value');
+    const seenByBrowser = await call({ method: 'GET', headers: {} });
+    expect(seenByBrowser.code).toBe(200);
+    expect(seenByBrowser.data).toMatchObject({ configured: true, keyLooksRight: true, dailyLimit: 30 });
+    expect(JSON.stringify(seenByBrowser.data)).not.toContain('secret');
+    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key');
+  });
+
+  it('uses a key pasted with quotes or a stray line break', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', ' "sk-ant-pasted"\n');
+    ai = () => ({ status: 200, body: message() });
+    expect((await call()).code).toBe(200);
+    expect(sent!.headers.get('x-api-key') ?? sent!.headers.get('authorization')).toContain('sk-ant-pasted');
+    expect(sent!.headers.get('x-api-key') ?? sent!.headers.get('authorization')).not.toContain('"');
     vi.stubEnv('ANTHROPIC_API_KEY', 'test-key');
   });
 });

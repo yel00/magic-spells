@@ -82,3 +82,29 @@ export function takeQuota(used, userId, now = Date.now(), limit = LIMITS.perDay)
   used.set(key, n + 1);
   return true;
 }
+
+/**
+ * The Anthropic key from the server's settings, tidied: a key pasted with
+ * quotes, spaces or a trailing line break is otherwise rejected as invalid.
+ * A couple of other common names for the setting are accepted too.
+ */
+export function readApiKey(env) {
+  for (const name of ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY', 'ANTHROPIC_KEY']) {
+    const value = String(env[name] ?? '').trim().replace(/^["']+|["']+$/g, '').trim();
+    if (value) return value;
+  }
+  return '';
+}
+
+/** What a browser sees at GET /api/tasting: whether the feature is switched on, never the key itself. */
+export function status(env) {
+  const key = readApiKey(env);
+  return {
+    configured: !!key,
+    // Anthropic keys start with "sk-ant-"; anything else was probably pasted from the wrong place.
+    keyLooksRight: key ? key.startsWith('sk-ant-') : null,
+    restrictedToListedUsers: !!String(env.AI_ALLOWED_USERS || '').trim(),
+    dailyLimit: Number(env.AI_DAILY_LIMIT) || LIMITS.perDay,
+    model: 'claude-opus-5-5',
+  };
+}

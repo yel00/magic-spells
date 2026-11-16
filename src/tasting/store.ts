@@ -58,10 +58,13 @@ async function askGuide(seeds: Seed[], note: string, count: number): Promise<Gui
     throw new TastingError('Couldn’t reach the server. Check your connection and try again.');
   }
   const isJson = res.headers.get('content-type')?.includes('json');
-  if (res.status === 501 || !isJson) throw new TastingError('Tasting sessions need an AI key on the server, which isn’t set up yet.', true);
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new TastingError(data?.error || 'The session couldn’t be run. Please try again.');
-  return data as Guide;
+  const data = isJson ? await res.json().catch(() => null) : null;
+  if (res.ok && data) return data as Guide;
+  // Say what actually went wrong: a missing key, a server crash and a timeout need different fixes.
+  if (data?.error) throw new TastingError(data.error, res.status === 501);
+  if (res.status === 404) throw new TastingError('This copy of the app has no tasting service (the server function is missing).', true);
+  if (res.status === 504) throw new TastingError('The server ran out of time before the guide answered. Please try again.');
+  throw new TastingError(`The server failed while running the session (error ${res.status}). The server’s log in Vercel will show why.`);
 }
 
 /** Run a session: ask the guide, find each pick on Spotify, keep the first `count` that exist there. */
