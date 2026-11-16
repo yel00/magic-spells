@@ -9,6 +9,9 @@ import { BORROW_LABELS } from '../enrich/borrowings';
 import { Videos } from './Discover';
 import { SongTabs } from './Tabs';
 import { SongVersions } from './Versions';
+import { useStore } from '../lib/store';
+import { addToDraft, draft, MAX_SEEDS, removeFromDraft } from '../tasting/draft';
+import { toast } from '../state/ui';
 import { trackAnalysis } from '../tools/lookup';
 import { camelot, keyName } from '../tools/keys';
 import { go } from '../lib/router';
@@ -33,6 +36,17 @@ export function SongInfoSheet({ track }: { track: Track }) {
   const artist = track.artists[0]?.name || '';
   const { data, loading, error } = useData(`info:song:${track.uri}`, () => songInfo(track.name, artist).then((v) => v ?? false));
   const analysis = useData(`info:tempo:${track.uri}`, () => trackAnalysis({ name: track.name, artist, durationMs: track.duration_ms }).then((v) => v ?? false));
+  const waiting = useStore(draft).picked;
+  const inTasting = waiting.some((p) => p.uri === track.uri);
+  const openTasting = () => {
+    ui.set({ infoFor: null, sheet: 'none' });
+    go('/tasting');
+  };
+  const addToTasting = () => {
+    const result = addToDraft(track);
+    if (result === 'full') toast(`A tasting takes up to ${MAX_SEEDS} songs. Remove one on the tasting screen first.`);
+    else toast(`Added to your tasting (${draft.get().picked.length} of ${MAX_SEEDS})`);
+  };
   const openTools = () => {
     ui.set({ infoFor: null, sheet: 'none' });
     go('/tools');
@@ -42,6 +56,20 @@ export function SongInfoSheet({ track }: { track: Track }) {
       <div className="row row-static actions-head">
         <Art images={track.album?.images} size={44} />
         <span className="row-text"><span className="row-title">{track.name}</span><span className="row-sub">{names(track.artists)}</span></span>
+      </div>
+      <div className="tasting-add">
+        {inTasting ? (
+          <>
+            <span className="facts">In your next tasting ({waiting.length} of {MAX_SEEDS}).</span>
+            <button className="btn btn-primary btn-small" onClick={openTasting}>Open tasting</button>
+            <button className="btn btn-quiet btn-small" onClick={() => removeFromDraft(track.uri)}>Remove</button>
+          </>
+        ) : (
+          <>
+            <button className="btn btn-small" onClick={addToTasting}>Add to a tasting</button>
+            {waiting.length > 0 && <button className="link-quiet" onClick={openTasting}>{waiting.length} song{waiting.length === 1 ? '' : 's'} waiting · open</button>}
+          </>
+        )}
       </div>
       <div className="tempo-row">
         {analysis.loading && <span className="facts">Looking up tempo and key…</span>}

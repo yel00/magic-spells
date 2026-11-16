@@ -221,3 +221,24 @@ describe('the server function', () => {
     vi.stubEnv('ANTHROPIC_API_KEY', 'test-key');
   });
 });
+
+describe('songs lined up for the next tasting', () => {
+  it('adds once, stops at the limit, and removes', async () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) });
+    const { addToDraft, clearDraft, draft, inDraft, MAX_SEEDS, removeFromDraft } = await import('../src/tasting/draft');
+    clearDraft();
+    expect(addToDraft(track('1', 'One', 'A'))).toBe('added');
+    expect(addToDraft(track('1', 'One', 'A'))).toBe('already');
+    for (let i = 2; i <= MAX_SEEDS; i++) expect(addToDraft(track(String(i), `S${i}`, 'A'))).toBe('added');
+    expect(addToDraft(track('99', 'Too many', 'A'))).toBe('full');
+    expect(draft.get().picked).toHaveLength(MAX_SEEDS);
+    expect(inDraft('spotify:track:1')).toBe(true);
+    removeFromDraft('spotify:track:1');
+    expect(inDraft('spotify:track:1')).toBe(false);
+    // The list survives the app being closed.
+    expect(JSON.parse([...store.values()].pop()!)).toHaveLength(MAX_SEEDS - 1);
+    clearDraft();
+    expect(draft.get().picked).toEqual([]);
+  });
+});

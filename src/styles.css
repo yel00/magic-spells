@@ -588,3 +588,4 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 .map-manage { overflow-y: auto; }
 .map-check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 16px; }
 .map-check input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
+.tasting-add { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }

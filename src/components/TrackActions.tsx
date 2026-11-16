@@ -5,6 +5,7 @@ import { invalidate, useData } from '../lib/useData';
 import * as api from '../spotify/api';
 import type { Track } from '../spotify/types';
 import { commands } from '../state/player';
+import { addToDraft, draft, MAX_SEEDS } from '../tasting/draft';
 import { openSheet, toast, ui } from '../state/ui';
 import { Art, pickImage } from './Art';
 
@@ -68,6 +69,16 @@ export function TrackActions({ track }: { track: Track }) {
             }
           >
             Write a note
+          </button>
+          <button
+            className="action"
+            onClick={() => {
+              const result = addToDraft(track);
+              toast(result === 'full' ? `A tasting takes up to ${MAX_SEEDS} songs.` : result === 'already' ? 'Already in your next tasting' : `Added to your tasting (${draft.get().picked.length} of ${MAX_SEEDS})`);
+              close();
+            }}
+          >
+            Add to a tasting
           </button>
           <button
             className="action"

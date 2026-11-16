@@ -1,5 +1,6 @@
 import { SimilarShelf } from '../components/Discover';
 import { concerts, newCount } from '../concerts/store';
+import { draft } from '../tasting/draft';
 import { go } from '../lib/router';
 import { useStore } from '../lib/store';
 import { Status } from '../components/Shelf';
@@ -15,6 +16,7 @@ export function DiscoverView() {
   const waiting = top.loading || followed.loading;
   const gigs = useStore(concerts);
   const fresh = newCount(gigs);
+  const lined = useStore(draft).picked.length;
   // "New to you" means: not among your most played and not someone you follow.
   const known = new Set([...(top.data?.items || []), ...(followed.data?.items || [])].map((a) => norm(a.name)));
 
@@ -39,7 +41,7 @@ export function DiscoverView() {
       <button className="concert-teaser" onClick={() => go('/tasting')}>
         <span className="row-text">
           <span className="row-title">Tasting session</span>
-          <span className="row-sub">A guided flight of songs from other genres that share what you love in yours</span>
+          <span className="row-sub">{lined ? `${lined} song${lined === 1 ? '' : 's'} lined up. Open to pour the flight` : 'A guided flight of songs from other genres that share what you love in yours'}</span>
         </span>
         <span className="concert-go">Open</span>
       </button>

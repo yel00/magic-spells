@@ -10,6 +10,7 @@ import * as api from '../spotify/api';
 import type { Track } from '../spotify/types';
 import { commands, player } from '../state/player';
 import { toast, ui } from '../state/ui';
+import { clearDraft, draft, MAX_SEEDS, toggleDraft } from '../tasting/draft';
 import { playlistDescription, seedChoices, seedFrom } from '../tasting/logic';
 import { deleteSession, runTasting, TastingError, tastings, updateSession } from '../tasting/store';
 import type { Pour, Session } from '../tasting/types';
@@ -24,7 +25,6 @@ function Head({ title, kicker }: { title: string; kicker: string }) {
   );
 }
 
-const MAX_SEEDS = 6;
 const day = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
 /** Start a new tasting, or reopen an earlier one. */
@@ -33,8 +33,8 @@ function NewTasting() {
   const recent = useData('home:recent', api.recentlyPlayed);
   const liked = useData('library:tracks', api.savedTracks);
   const past = useStore(tastings).sessions;
-  // The chosen songs are kept whole, so one found by search stays chosen after the search is cleared.
-  const [picked, setPicked] = useState<Track[]>([]);
+  // The chosen songs live in a shared list, so songs added from elsewhere in the app are already here.
+  const picked = useStore(draft).picked;
   const [text, setText] = useState('');
   const [query, setQuery] = useState('');
   const [note, setNote] = useState('');
@@ -53,12 +53,14 @@ function NewTasting() {
   const loading = top.loading && recent.loading && liked.loading;
   const isPicked = (t: Track) => picked.some((p) => p.uri === t.uri);
   const full = picked.length >= MAX_SEEDS;
-  const toggle = (t: Track) => setPicked((cur) => (cur.some((p) => p.uri === t.uri) ? cur.filter((p) => p.uri !== t.uri) : cur.length >= MAX_SEEDS ? cur : [...cur, t]));
+  const toggle = toggleDraft;
 
   const start = async () => {
     setError(null);
     try {
       const session = await runTasting(picked.map(seedFrom), note.trim(), count, setStep);
+      // The flight has been poured from these; start the next tasting with a clean list.
+      clearDraft();
       go(`/tasting/${session.id}`);
     } catch (e) {
       setError(e instanceof TastingError ? e : new TastingError('The session couldn’t be run. Please try again.'));
