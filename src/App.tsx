@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { DevicesSheet } from './components/DevicesSheet';
 import { MixSheet, VideoSheet } from './components/Discover';
 import { DiscoverIcon, HomeIcon, LibraryIcon, NotesIcon, SearchIcon } from './components/Icons';
+import { PictureViewer } from './components/Gallery';
 import { LyricsSheet } from './components/LyricsSheet';
 import { MiniPlayer } from './components/MiniPlayer';
 import { NoteEditor } from './components/Notes';
@@ -148,6 +149,8 @@ export function App() {
       <Sheet open={!!video} onClose={() => ui.set({ video: null })} title="Video">
         {video && <VideoSheet video={video} />}
       </Sheet>
+
+      <PictureViewer />
 
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>

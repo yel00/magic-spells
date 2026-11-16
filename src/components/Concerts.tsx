@@ -9,7 +9,8 @@ export function ConcertCard({ concert, isNew, showArtist = true }: { concert: Co
   const others = concert.lineup.filter((n) => !concert.artists.includes(n));
   const sub = showArtist && concert.name !== concert.artists[0] ? concert.name : others.length ? `with ${others.slice(0, 3).join(', ')}` : '';
   return (
-    <a className="concert" href={concert.url} target="_blank" rel="noreferrer">
+    <a className={`concert ${concert.image ? 'concert-with-art' : ''}`} href={concert.url} target="_blank" rel="noreferrer">
+      {concert.image && <img className="concert-art" src={concert.image} alt="" loading="lazy" decoding="async" />}
       <span className="concert-date">
         <span className="concert-month">{d.month}</span>
         <span className="concert-day">{d.day}</span>

@@ -1,6 +1,7 @@
 import { createStore } from '../lib/store';
 import type { MixRequest } from '../components/Discover';
 import type { Video } from '../discover';
+import type { Picture } from '../enrich/artwork';
 import type { NoteSubject } from '../notes/types';
 import type { Track } from '../spotify/types';
 import type { TagSubject } from '../tags/logic';
@@ -18,10 +19,12 @@ interface UiState {
   lyrics: boolean;
   mix: MixRequest | null;
   video: Video | null;
+  /** A set of pictures being viewed large, and which one is showing. */
+  pictures: { list: Picture[]; at: number } | null;
   toast: string | null;
 }
 
-export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, noteDraft: null, tagsFor: null, lyrics: false, mix: null, video: null, toast: null });
+export const ui = createStore<UiState>({ sheet: 'none', pending: null, actionsFor: null, infoFor: null, noteDraft: null, tagsFor: null, lyrics: false, mix: null, video: null, pictures: null, toast: null });
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 

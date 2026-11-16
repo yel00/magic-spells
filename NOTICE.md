@@ -27,6 +27,8 @@ fetches it on the user's behalf, and each service's terms apply to that use.
 | MusicBrainz, ListenBrainz, AcousticBrainz | Credits, band members, similar artists, recordings, tempo and key |
 | Wikipedia, Wikidata | Biographies, album background and reception (text is CC BY-SA; shown with a link to the article) |
 | Discogs API | What a person is credited on |
+| Cover Art Archive | Album artwork beyond the front cover. Images belong to their rights holders and are shown, not stored. |
+| Wikimedia Commons (via Wikipedia) | Artist photographs. Licences vary by image; each links to its file page for credit. |
 | Genius API | Song background (needs your own key) |
 | Last.fm API | Similar artists (needs your own key) |
 | YouTube Data API | Live performances (needs your own key) |

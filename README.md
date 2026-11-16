@@ -65,6 +65,9 @@ remote, so nothing here streams or stores music.
 - Samples and borrowed parts in "About this song": what the song samples,
   what melodies or riffs it replays from elsewhere, and what has since
   borrowed from it; tap one to play it
+- Artwork and photos: an album's back cover, booklet and disc art in a
+  swipeable strip; photographs on artist pages; tap any picture to see it
+  large. Concert listings show the event's promotional image
 - Music maps (Discover tab, and the Map button on artist pages):
   - Similar-artist map: closer means more alike; tap a name to play it, open
     it, re-centre the map on it or start a mix

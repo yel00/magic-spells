@@ -137,3 +137,13 @@ describe('live samples', () => {
     }
   }, 120_000);
 });
+
+describe('live artwork', () => {
+  it('finds an album’s extra artwork', async () => {
+    const { albumArtwork } = await import('../src/enrich/artwork');
+    const pics = await albumArtwork('76df3287-6cda-33eb-8e9a-044b5e15ffdd');
+    console.log('artwork:', pics?.map((p) => p.label).join(' | '), '|', pics?.[1]?.full);
+    expect(pics?.length).toBeGreaterThan(2);
+    expect(await albumArtwork('00000000-0000-4000-8000-000000000000')).toBeNull();
+  }, 60_000);
+});

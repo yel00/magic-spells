@@ -213,6 +213,14 @@ function demoConcerts(artists: string[]): Concert[] {
       id: `demo-${norm(artist)}`, name: i === 1 ? 'Demo City Summer Stage' : artist, date, time: i === 2 ? undefined : '20:00',
       venue: VENUES[i % VENUES.length], city: 'Demo City', url: 'https://example.com', lineup: i === 1 ? [artist, 'Odessa Park', 'Night Ferry'] : [artist],
       distance: 3 + i * 6, artists: [artist],
+      image: i < 2 ? demoPoster(artist, i) : undefined,
     };
   });
+}
+
+/** A stand-in for the promotional image Ticketmaster supplies with an event. */
+function demoPoster(artist: string, n: number): string {
+  const [a, b] = [['#6b2a3b', '#ffb4a2'], ['#0f4c5c', '#9ad1d4']][n % 2];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="#15151a"/></linearGradient></defs><rect width="640" height="360" fill="url(#g)"/><text x="320" y="170" font-family="Georgia,serif" font-size="46" fill="${b}" text-anchor="middle">${artist}</text><text x="320" y="220" font-family="sans-serif" font-size="20" fill="${b}" opacity=".7" text-anchor="middle">LIVE · DEMO CITY</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }

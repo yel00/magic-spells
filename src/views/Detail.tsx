@@ -8,6 +8,8 @@ import { useStore } from '../lib/store';
 import { Art, pickImage } from '../components/Art';
 import { ChevronLeft, HeartIcon, PlayIcon, ShuffleIcon } from '../components/Icons';
 import { SimilarShelf, Videos } from '../components/Discover';
+import { Gallery } from '../components/Gallery';
+import { albumArtwork, artistPhotos, demoPictures, releaseIdFrom } from '../enrich/artwork';
 import { AlbumVersions } from '../components/Versions';
 import { groupEditions } from '../spotify/editions';
 import { NotesSection } from '../components/Notes';
@@ -99,8 +101,15 @@ export function AlbumView({ id }: { id: string }) {
   const reception = useData(a && articleUrl ? `reception:${id}` : null, () =>
     isDemo() ? Promise.resolve(demoReception(a!.name)) : receptionFor(articleUrl!).then((v) => v ?? false),
   );
+  const releaseId = info.data ? releaseIdFrom(info.data.links) : null;
+  const artwork = useData(a && (releaseId || isDemo()) ? `artwork:${id}` : null, () =>
+    isDemo() ? Promise.resolve(demoPictures('album', a!.name)) : albumArtwork(releaseId!).then((v) => v ?? []),
+  );
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
   const tracks = a.tracks.items;
+  // Spotify already shows the front cover, so the strip is only worth showing when there is more than that.
+  const extra = (artwork.data || []).filter((p) => !p.label.startsWith('Front cover'));
+  const pictures = extra.length ? artwork.data || [] : [];
   const total = tracks.reduce((n, t) => n + t.duration_ms, 0);
   const discs = new Set(tracks.map((t) => t.disc_number || 1)).size;
   return (
@@ -132,6 +141,7 @@ export function AlbumView({ id }: { id: string }) {
         ))}
       </div>
       <section className="about"><TagEditor subject={{ subject_uri: a.uri, title: a.name, subtitle: names(a.artists), image: pickImage(a.images, 150) || null }} /></section>
+      <Gallery title="Artwork" pictures={pictures} />
       <AlbumVersions album={a} />
       <NotesSection subject={{ subject_uri: a.uri, parent_uri: null, title: a.name, subtitle: names(a.artists), image: pickImage(a.images, 150) || null }} />
       {info.loading && <section className="about"><AboutSkeleton /></section>}
@@ -157,6 +167,10 @@ export function ArtistView({ id }: { id: string }) {
   const info = useData(a ? `info:artist:${id}` : null, () => artistInfo(a!.name).then((v) => v ?? false));
   const place = useStore(concerts).place;
   const shows = useData(a && place ? `shows:${id}:${place.lat},${place.lon},${place.radius}` : null, () => showsNear(a!.name).then((v) => v ?? []));
+  const bioUrl = info.data ? info.data.bio?.url : undefined;
+  const photos = useData(a && (bioUrl || isDemo()) ? `photos:${id}` : null, () =>
+    isDemo() ? Promise.resolve(demoPictures('artist', a!.name)) : artistPhotos(bioUrl!).then((v) => v ?? []),
+  );
   const popular = useData(a ? `popular:${id}` : null, () => popularTracks(a!.name).then((v) => v ?? []));
   if (!a) return <div className="page"><Back /><Status loading={loading} error={error} /></div>;
   // One card per album: remasters and deluxe editions are folded together.
@@ -212,6 +226,7 @@ export function ArtistView({ id }: { id: string }) {
           </div>
         </section>
       )}
+      <Gallery title="Photos" pictures={photos.data || []} />
       <SimilarShelf name={a.name} title="Similar artists" />
       <Videos query={`${a.name} live`} title="Live" />
       <section className="about"><TagEditor subject={{ subject_uri: a.uri, title: a.name, subtitle: '', image: pickImage(a.images, 150) || null }} /></section>
