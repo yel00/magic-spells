@@ -13,6 +13,7 @@ the following, each under its own terms.
 | Sonivox sound font (ships with alphaTab) | Instrument sounds for tab playback | See `soundfont/LICENSE` in alphaTab |
 | [Capacitor](https://capacitorjs.com) | The iPhone/iPad shell | MIT |
 | [node-postgres](https://node-postgres.com) | Notes and tags sync | MIT |
+| [Anthropic SDK](https://github.com/anthropics/anthropic-sdk-typescript), [Zod](https://zod.dev) | Tasting sessions | MIT |
 | `public/genres.json` | The genre map | Derived from [Wikidata](https://www.wikidata.org), CC0 |
 
 ## Services the app reads from at run time
@@ -30,6 +31,7 @@ fetches it on the user's behalf, and each service's terms apply to that use.
 | Last.fm API | Similar artists (needs your own key) |
 | YouTube Data API | Live performances (needs your own key) |
 | Ticketmaster Discovery API | Concert listings (needs your own key) |
+| Anthropic API (Claude) | Tasting sessions (needs your own key; usage is billed to you) |
 | LRCLIB | Lyrics. Community-contributed, not a licensed lyrics provider. |
 | Songsterr | Finding a song's tab page. Uses a search address that Songsterr does not document for outside use; if it stops working the app falls back to plain search links. |
 | Open-Meteo geocoding | Turning a city name into a location |

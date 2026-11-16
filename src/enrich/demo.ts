@@ -52,7 +52,12 @@ export function demoSongInfo(title: string, artist: string): SongInfo {
     released: 'March 3, 2015',
     writers: [pick(title, 0), pick(title, 3)],
     producers: [pick(title, 4)],
-    related: [{ label: 'Covered by', songs: [{ title, artist: 'Another Demo Band', url: 'https://genius.com' }] }],
+    related: [
+      { label: 'Samples', songs: [{ title: 'Marigold', artist: 'Odessa Park', url: 'https://genius.com' }] },
+      { label: 'Interpolates', songs: [{ title: 'Blue Hour', artist: 'Glass Orchard', url: 'https://genius.com' }, { title: 'A Riff From Somewhere Else', artist: 'Nobody', url: 'https://genius.com' }] },
+      { label: 'Sampled in', songs: [{ title: 'Signal Fire', artist: 'Night Ferry', url: 'https://genius.com' }] },
+      { label: 'Covered by', songs: [{ title, artist: 'Another Demo Band', url: 'https://genius.com' }] },
+    ],
   };
 }
 

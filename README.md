@@ -57,6 +57,14 @@ remote, so nothing here streams or stores music.
   on or mixed, each of which opens on Spotify. Artist pages list band members
   the same way. Record labels and genres are tappable and open everything
   Spotify files under them
+- Tasting sessions (Discover tab): pick a few songs you like and an AI guide
+  works out what they share as sound, then pours a flight of three to five
+  songs from very different genres with the same qualities, explaining why
+  each was chosen and what to listen for. Favourite songs, add notes, save the
+  flight as a Spotify playlist to share, and revisit earlier sessions
+- Samples and borrowed parts in "About this song": what the song samples,
+  what melodies or riffs it replays from elsewhere, and what has since
+  borrowed from it; tap one to play it
 - Music maps (Discover tab, and the Map button on artist pages):
   - Similar-artist map: closer means more alike; tap a name to play it, open
     it, re-centre the map on it or start a mix
@@ -233,6 +241,27 @@ need a scheduled server job and are not built yet.
   Lyrics are only used when they belong to a recording of the same length
   (within three seconds), so a live version's timing is never applied to the
   studio track. LRCLIB is community-sourced, not a licensed lyrics service.
+
+## How tasting sessions and samples work
+
+- **Tasting sessions use Claude** through the Anthropic API (`api/tasting.js`,
+  model `claude-opus-5-5`). Add `ANTHROPIC_API_KEY` to turn them on; a session
+  costs a few cents. The app sends only the titles and artists you chose, plus
+  anything you type. Every song the guide proposes is looked up on Spotify by
+  exact title and artist, and any that can't be found is dropped, which is
+  why the guide is asked for two more than are shown. Its descriptions come
+  from its general knowledge of music, not from analysing the audio, so
+  details can be wrong.
+- **Who can run one.** Any Spotify account that can sign in to your copy, up
+  to 30 sessions a day each. Set `AI_ALLOWED_USERS` to a comma-separated list
+  of Spotify user ids to restrict it, and `AI_DAILY_LIMIT` to change the cap.
+- **Sessions are kept on the device** they were run on. Saving a flight as a
+  playlist puts it in Spotify, where it can be shared like any other.
+- **Samples** come from Genius (samples and "interpolations", meaning a melody,
+  riff or lyric replayed rather than lifted) and MusicBrainz (samples). Both
+  only know what contributors have documented; the app does not listen to the
+  audio to detect samples. A link to WhoSampled is offered for anything the
+  two miss.
 
 ## How the maps and tags work
 

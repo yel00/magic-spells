@@ -127,3 +127,13 @@ describe('live versions and reviews', () => {
     console.log('In Rainbows:', JSON.stringify(modern?.tables[0]?.aggregate), modern?.tables[0]?.ratings.length);
   }, 120_000);
 });
+
+describe('live samples', () => {
+  it('finds a famous sample in MusicBrainz', async () => {
+    const { mbSamples } = await import('../src/enrich/borrowings');
+    for (const [name, artist] of [['Ice Ice Baby', 'Vanilla Ice'], ['Stronger', 'Kanye West']] as const) {
+      const r = await mbSamples({ name, artist });
+      console.log(name, '→ samples:', JSON.stringify(r?.samples.slice(0, 4)), '| sampled by:', r?.sampledBy.length);
+    }
+  }, 120_000);
+});

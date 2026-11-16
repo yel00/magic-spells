@@ -4,12 +4,12 @@
 // are with their Spotify access token; we ask Spotify whose token it is and
 // file the notes under that Spotify account. No separate login, no passwords.
 import pg from 'pg';
+import { bearer, spotifyUser } from './_lib/auth.js';
 import { LIMITS, SCHEMA, syncNotes } from './_lib/notes.js';
 import { LIMITS as TAG_LIMITS, SCHEMA as TAG_SCHEMA, syncTags } from './_lib/tags.js';
 
 let pool;
 let ready;
-const known = new Map(); // token -> { id, until }
 
 function database() {
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
@@ -22,26 +22,13 @@ function database() {
   return pool;
 }
 
-async function spotifyUser(token) {
-  const hit = known.get(token);
-  if (hit && hit.until > Date.now()) return hit.id;
-  const r = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${token}` } });
-  if (r.status === 401 || r.status === 403) return null;
-  if (!r.ok) throw new Error(`Spotify ${r.status}`);
-  const { id } = await r.json();
-  if (!id) return null;
-  if (known.size > 500) known.clear();
-  known.set(token, { id, until: Date.now() + 5 * 60_000 });
-  return id;
-}
-
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const db = database();
   if (!db) return res.status(501).json({ error: 'Notes sync is not set up: add DATABASE_URL.' });
 
-  const token = /^Bearer (.+)$/.exec(req.headers.authorization || '')?.[1];
+  const token = bearer(req);
   if (!token) return res.status(401).json({ error: 'Sign in with Spotify first.' });
 
   const body = typeof req.body === 'string' ? safeParse(req.body) : req.body;

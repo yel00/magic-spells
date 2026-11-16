@@ -16,12 +16,14 @@
     "ios:open": "cap open ios"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@capacitor/core": "^8.6.2",
     "@capacitor/ios": "^8.6.2",
     "@coderline/alphatab": "^1.9.0",
     "pg": "^8.23.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.2",

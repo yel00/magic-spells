@@ -36,6 +36,13 @@ export function DiscoverView() {
         </span>
         <span className="concert-go">Open</span>
       </button>
+      <button className="concert-teaser" onClick={() => go('/tasting')}>
+        <span className="row-text">
+          <span className="row-title">Tasting session</span>
+          <span className="row-sub">A guided flight of songs from other genres that share what you love in yours</span>
+        </span>
+        <span className="concert-go">Open</span>
+      </button>
       <button className="concert-teaser" onClick={() => go('/map')}>
         <span className="row-text">
           <span className="row-title">Your music map</span>

@@ -4,6 +4,8 @@ import { NotConfigured, songInfo } from '../enrich';
 import type { Track } from '../spotify/types';
 import { AboutSkeleton } from './About';
 import { Art } from './Art';
+import { Borrowings } from './Borrowings';
+import { BORROW_LABELS } from '../enrich/borrowings';
 import { Videos } from './Discover';
 import { SongTabs } from './Tabs';
 import { SongVersions } from './Versions';
@@ -53,6 +55,7 @@ export function SongInfoSheet({ track }: { track: Track }) {
         <button className="link-quiet" onClick={openTools}>{analysis.data ? 'Check by ear' : 'Measure by ear'}</button>
       </div>
       <SongTabs uri={track.uri} title={track.name} artist={artist} />
+      <Borrowings track={track} genius={data ? data.related : undefined} geniusPending={loading} />
       <SongVersions track={track} />
       <Videos query={`${artist} ${track.name} live`} title="Live & other versions" />
       {loading && <AboutSkeleton />}
@@ -71,7 +74,7 @@ export function SongInfoSheet({ track }: { track: Track }) {
             {data.released && (<><dt>Released</dt><dd>{data.released}</dd></>)}
             {data.writers.length > 0 && (<><dt>Written by</dt><dd><People names={data.writers} /></dd></>)}
             {data.producers.length > 0 && (<><dt>Produced by</dt><dd><People names={data.producers} /></dd></>)}
-            {data.related.map((r) => (
+            {data.related.filter((r) => !BORROW_LABELS.has(r.label)).map((r) => (
               <div key={r.label} className="songinfo-related">
                 <dt>{r.label}</dt>
                 <dd>

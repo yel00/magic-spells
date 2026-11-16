@@ -18,6 +18,8 @@ import { openNotes } from './notes/store';
 import { openTags } from './tags/store';
 import { TagEditor } from './components/Tags';
 import { TagsView } from './views/TagsView';
+import { TastingView } from './views/TastingView';
+import { openTastings } from './tasting/store';
 import * as api from './spotify/api';
 import { startPolling, stopPolling } from './state/player';
 import { openSheet, ui } from './state/ui';
@@ -64,6 +66,7 @@ export function App() {
     if (!userId) return;
     openNotes(userId);
     openTags(userId);
+    openTastings(userId);
     // Quietly re-check for concerts, at most once a day.
     scanConcerts();
   }, [userId]);
@@ -89,12 +92,13 @@ export function App() {
   else if (route.name === 'map') view = route.id ? <ArtistMapView key={route.id} name={route.id} /> : <LibraryMapView />;
   else if (route.name === 'genres') view = <GenreMapView start={route.id} />;
   else if (route.name === 'tags') view = <TagsView key={route.id || ''} tag={route.id} />;
+  else if (route.name === 'tasting') view = <TastingView key={route.id || ''} id={route.id} />;
   else if (route.name === 'tools') view = <ToolsView />;
   else if (route.name === 'tab' && route.id) view = <TabPlayerView id={route.id} />;
   else if (route.name === 'settings') view = <Settings />;
   else view = <Home />;
 
-  const activeTab = route.name === 'tags' ? 'library' : ['concerts', 'map', 'genres'].includes(route.name) ? 'discover' : TABS.some((t) => t.name === route.name) ? route.name : null;
+  const activeTab = route.name === 'tags' ? 'library' : ['concerts', 'map', 'genres', 'tasting'].includes(route.name) ? 'discover' : TABS.some((t) => t.name === route.name) ? route.name : null;
 
   return (
     <div className="app">

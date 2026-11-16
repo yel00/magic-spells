@@ -542,3 +542,38 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 .edit-row .row-main { cursor: default; }
 .edit-row .icon-btn { width: 40px; font-size: 13px; color: var(--muted); }
 .edit-row .edit-remove { color: #ffb4a2; }
+
+/* ---- Tasting sessions ---- */
+.seed-list { display: flex; flex-direction: column; gap: 4px; max-height: 46vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.seed { display: flex; align-items: center; gap: 12px; padding: 7px 10px; border-radius: 12px; border: 1px solid transparent; }
+.seed .art { width: 40px; flex: none; border-radius: 4px; }
+.seed-on { background: rgba(201, 182, 255, 0.12); border-color: rgba(201, 182, 255, 0.4); }
+.seed-tick { width: 22px; flex: none; color: var(--accent); font-weight: 700; text-align: center; }
+.tasting-note { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.tasting-note input, .tasting-notes { padding: 12px 14px; border: 0; outline: 0; border-radius: 12px; background: var(--surface-2); color: var(--text); font: 16px/1.45 var(--sans); -webkit-user-select: text; user-select: text; }
+.tasting-notes { width: 100%; resize: none; font-family: var(--serif); }
+.tasting-summary { font: 19px/1.5 var(--serif); color: #e6e3dc; }
+.tasting-delete { align-self: flex-start; }
+.bar-busy span { width: 35%; animation: slide 1.6s ease-in-out infinite; }
+@keyframes slide { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .bar-busy span { animation: none; width: 100%; opacity: 0.5; } }
+.shared { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.shared-card { padding: 14px 16px; border-radius: 14px; background: linear-gradient(135deg, #2a1f4d, #17171c 80%); }
+.shared-card strong { font: 600 17px var(--serif); }
+.shared-card p { margin-top: 6px; color: #cfccd6; font-size: 15px; line-height: 1.5; }
+.pours { display: flex; flex-direction: column; gap: 14px; }
+.pour { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; background: var(--surface); border: 1px solid transparent; }
+.pour-playing { border-color: rgba(201, 182, 255, 0.5); }
+.pour-head { display: flex; align-items: center; gap: 12px; }
+.pour-head .art { width: 64px; flex: none; }
+.pour-number { font: 600 26px var(--serif); color: var(--gold); width: 22px; flex: none; }
+.pour-tags { font-size: 12px; color: var(--gold); margin-top: 2px; text-transform: capitalize; }
+.pour-shares { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.pour-why { font: 16px/1.55 var(--serif); color: #dcd9d1; }
+.pour-listen { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.45; color: #dcd9d1; }
+.pour-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+@media (min-width: 820px) { .shared { grid-template-columns: 1fr 1fr; } }
+
+/* ---- Samples and borrowed parts ---- */
+.borrow-label { display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
+.borrow-label span { font-size: 12px; color: var(--muted); }
