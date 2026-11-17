@@ -38,14 +38,6 @@ export function Home() {
         </Shelf>
       )}
 
-      {!!playlists.data?.items.length && (
-        <Shelf title="Your playlists">
-          {playlists.data.items.filter(Boolean).slice(0, 12).map((p) => (
-            <Card key={p.id} title={p.name} subtitle={p.owner.display_name || ''} images={p.images} to={`/playlist/${p.id}`} />
-          ))}
-        </Shelf>
-      )}
-
       {!!artists.data?.items.length && (
         <Shelf title="Your top artists">
           {artists.data.items.map((a) => <Card key={a.id} title={a.name} images={a.images} to={`/artist/${a.id}`} round />)}
@@ -61,6 +53,14 @@ export function Home() {
             ))}
           </div>
         </section>
+      )}
+
+      {!!playlists.data?.items.length && (
+        <Shelf title="Your playlists">
+          {playlists.data.items.filter(Boolean).slice(0, 12).map((p) => (
+            <Card key={p.id} title={p.name} subtitle={p.owner.display_name || ''} images={p.images} to={`/playlist/${p.id}`} />
+          ))}
+        </Shelf>
       )}
     </div>
   );
