@@ -42,7 +42,7 @@ export function NotesSection({ subject }: { subject: NoteSubject }) {
         <h2>Your notes</h2>
         <button className="btn btn-small" onClick={() => ui.set({ noteDraft: { subject, body: '' } })}><PlusIcon size={16} /> Add note</button>
       </div>
-      {mine.length === 0 && <p className="facts">Nothing yet. Jot down what you hear — it stays with this {subject.subject_uri.split(':')[1]}.</p>}
+      {mine.length === 0 && <p className="facts">Nothing yet. Jot down what you hear — it stays with this {subject.subject_uri.split(':')[1].replace('track', 'song')}.</p>}
       {mine.map((n) => <NoteCard key={n.id} note={n} context={n.subject_uri !== subject.subject_uri ? n.title : undefined} />)}
     </section>
   );

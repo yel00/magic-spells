@@ -27,7 +27,8 @@ CREATE INDEX IF NOT EXISTS notes_user_rev ON notes (user_id, rev);
 `;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const URI = /^spotify:(track|album|artist|playlist):[A-Za-z0-9_]{1,64}$/;
+// Notes are about something on Spotify, or about a past concert (a setlist.fm show).
+const URI = /^(spotify:(track|album|artist|playlist):[A-Za-z0-9_]{1,64}|setlistfm:show:[0-9a-f]{6,16})$/;
 export const LIMITS = { changes: 500, body: 20000, text: 300, image: 600 };
 
 const text = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');

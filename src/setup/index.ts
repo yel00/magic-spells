@@ -5,6 +5,7 @@ export type SetupStatus = {
   lastfm: boolean;
   youtube: boolean;
   concerts: boolean;
+  setlists: boolean;
   sync: boolean;
   ai: boolean;
   aiNamedOnly: boolean;
@@ -31,6 +32,7 @@ export const EXTRAS: Extra[] = [
   { id: 'lastfm', name: 'Better suggestions', adds: 'Stronger similar-artist data for Discover and the maps.', without: 'Suggestions use ListenBrainz, which needs no key.', setting: 'LASTFM_API_KEY', where: 'Last.fm: create an API account', link: 'https://www.last.fm/api/account/create', cost: 'Free' },
   { id: 'youtube', name: 'Videos inside the app', adds: 'Live performances play without leaving the app.', without: 'The app links out to YouTube.', setting: 'YOUTUBE_API_KEY', where: 'Google Cloud: enable YouTube Data API v3, create an API key', link: 'https://console.cloud.google.com/apis/library/youtube.googleapis.com', cost: 'Free, about 100 searches a day' },
   { id: 'concerts', name: 'Concerts near you', adds: 'Shows by artists you follow, near a place you choose.', without: 'The concert scanner is off.', setting: 'TICKETMASTER_API_KEY', where: 'Ticketmaster: register for a developer key', link: 'https://developer.ticketmaster.com', cost: 'Free' },
+  { id: 'setlists', name: 'Past shows and setlists', adds: 'An artist’s past concerts, what they played, and recordings of each night.', without: 'Artist pages link out to setlist.fm.', setting: 'SETLISTFM_API_KEY', where: 'setlist.fm: sign in, then apply for an API key', link: 'https://www.setlist.fm/settings/api', cost: 'Free for personal use' },
   { id: 'ai', name: 'Tasting sessions', adds: 'An AI guide pours a flight of songs from different genres.', without: 'Tasting sessions are off.', setting: 'ANTHROPIC_API_KEY', where: 'Anthropic: create an API key', link: 'https://platform.claude.com/settings/keys', cost: 'A few cents a session' },
 ];
 

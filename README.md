@@ -69,6 +69,12 @@ remote, so nothing here streams or stores music.
   swipeable strip; photographs on artist pages; tap any picture to see it
   large. Artist pages also show gig posters where the Event Art Archive has
   any (few artists do). Concert listings show the event's promotional image
+- Past shows: artist pages list their past concerts (from setlist.fm). Each
+  show has its own page with the setlist (tap a song to play it, play the
+  whole night in order, or save it as a playlist), YouTube recordings of that
+  night, your own pictures and your notes. Browse an artist's shows by year.
+  Mark "I was there" and Discover → Your concerts lists your shows by date or
+  by band
 - Music maps (Discover tab, and the Map button on artist pages):
   - Similar-artist map: closer means more alike; tap a name to play it, open
     it, re-centre the map on it or start a mix
@@ -155,7 +161,11 @@ The same steps in full, for hosts other than Vercel or for reference.
    <https://developer.ticketmaster.com> and add it in Vercel as
    `TICKETMASTER_API_KEY`. Then open Discover → Concerts near you and pick
    your area.
-10. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
+10. **Past shows and setlists (optional)**: sign in at <https://www.setlist.fm>,
+    apply for a key at <https://www.setlist.fm/settings/api> (free for
+    non-commercial use) and add it in Vercel as `SETLISTFM_API_KEY`. Without
+    it, artist pages link out to setlist.fm.
+11. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
 
 ## iPhone and iPad app
 
@@ -243,6 +253,19 @@ is not stored on the server. Distances are in miles.
 It scans when the app is opened, not in the background: a show announced today
 appears the next time you open the app. Background push notifications would
 need a scheduled server job and are not built yet.
+
+## How past shows work
+
+Shows and setlists come from setlist.fm, where fans write down what was
+played; some shows have no setlist and some are wrong. The artist is matched
+by its MusicBrainz id, so two bands with the same name are not mixed up.
+Playing a setlist plays the studio versions Spotify has, not the night
+itself; covers are looked up under the original artist if the band never
+released them. Recordings are a YouTube search for the artist, venue and
+year, so they are likely matches, not guaranteed ones. The list of shows you
+were at and your pictures (shrunk to 1600 pixels) are kept on the device;
+notes about a show sync like any other note. setlist.fm's key is free for
+non-commercial use only.
 
 ## How cross-linking and lyrics work
 

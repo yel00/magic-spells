@@ -10,6 +10,7 @@ export function setupStatus(env) {
     lastfm: has(env, 'LASTFM_API_KEY'),
     youtube: has(env, 'YOUTUBE_API_KEY'),
     concerts: has(env, 'TICKETMASTER_API_KEY'),
+    setlists: has(env, 'SETLISTFM_API_KEY'),
     sync: has(env, 'DATABASE_URL'),
     ai: !!readApiKey(env),
     aiNamedOnly: has(env, 'AI_ALLOWED_USERS'),

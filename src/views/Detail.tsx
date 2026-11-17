@@ -8,6 +8,7 @@ import { useStore } from '../lib/store';
 import { Art, pickImage } from '../components/Art';
 import { ChevronLeft, HeartIcon, PlayIcon, ShuffleIcon } from '../components/Icons';
 import { SimilarShelf, Videos } from '../components/Discover';
+import { PastShows } from '../components/Shows';
 import { Gallery } from '../components/Gallery';
 import { albumArtwork, artistPhotos, demoPictures, releaseIdFrom } from '../enrich/artwork';
 import { artistPosters } from '../enrich/posters';
@@ -231,6 +232,7 @@ export function ArtistView({ id }: { id: string }) {
           </div>
         </section>
       )}
+      {(mbid || isDemo()) && <PastShows mbid={mbid || 'demo'} name={a.name} />}
       <Gallery title="Photos" pictures={photos.data || []} />
       <Gallery title="Posters" pictures={posters.data || []} tall />
       <SimilarShelf name={a.name} title="Similar artists" />

@@ -29,6 +29,7 @@ export function pathForUri(uri: string | undefined | null): string | null {
   if (!uri) return null;
   const [, type, id] = uri.split(':');
   if (!id) return null;
+  if (type === 'show') return `/show/${id}`;
   if (type === 'album' || type === 'artist' || type === 'playlist') return `/${type}/${id}`;
   return null;
 }
