@@ -94,22 +94,35 @@ remote, so nothing here streams or stores music.
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
 - Demo mode with invented music, for looking around without an account
 
-## Run your own copy
+## Make your own copy (about ten minutes)
 
-Anyone can run this for themselves. Each copy uses its owner's Spotify app, so
-Spotify's five-user limit for personal apps applies per copy, not to the
-project as a whole.
+Everyone runs their own copy with their own Spotify app. Nothing is shared
+between copies, and it is free to host. Spotify Premium is needed to control
+playback.
 
-1. Fork or clone this repository.
-2. Follow **Set it up** below: create a Spotify app, deploy to Vercel (or any
-   host that serves a Vite build and Node functions in `api/`), and add the
-   redirect URI.
-3. Add whichever optional keys you want. `.env.example` lists every setting
-   and what it turns on; the app works without any of them.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyel00%2Fmagic-spells&project-name=magic-spells&repository-name=magic-spells)
 
-Spotify Premium is needed to control playback.
+1. **Press the button above.** Vercel copies the project into your GitHub
+   account and puts it online. No settings are needed. (A free Vercel and
+   GitHub account are required.)
+2. **Open your new site.** The welcome screen walks you through creating a
+   Spotify app: it shows the exact redirect address to paste, with a Copy
+   button, and a box for the client ID.
+3. **Press Connect Spotify.** That's it. On an iPhone or iPad, open the site in
+   Safari → Share → Add to Home Screen.
 
-## Set it up
+Then, whenever you like, open **Settings** in the app. It lists the optional
+extras (song background, notes sync, videos, concerts, tasting sessions),
+shows which are on, and for each one that is off says where to get a free key
+and what to name it.
+
+Up to five people can use one copy (Spotify's limit for personal apps): add
+them under User Management in your Spotify app. Anyone else makes their own
+copy the same way. Settings → Share Magic Spells sends them the link.
+
+## Set it up by hand
+
+The same steps in full, for hosts other than Vercel or for reference.
 
 1. **Create a Spotify app** at <https://developer.spotify.com/dashboard>
    (the account must have Premium). Choose "Web API".
@@ -256,9 +269,11 @@ need a scheduled server job and are not built yet.
   why the guide is asked for two more than are shown. Its descriptions come
   from its general knowledge of music, not from analysing the audio, so
   details can be wrong.
-- **Who can run one.** Any Spotify account that can sign in to your copy, up
-  to 30 sessions a day each. Set `AI_ALLOWED_USERS` to a comma-separated list
-  of Spotify user ids to restrict it, and `AI_DAILY_LIMIT` to change the cap.
+- **Who can run one.** By default, any Spotify account that can sign in to
+  your copy, up to 30 sessions a day each. To limit it to people you name, set
+  `AI_ALLOWED_USERS` to their Spotify IDs, separated by commas; each person's
+  ID is shown with a Copy button in their Settings. `AI_DAILY_LIMIT` changes
+  the cap.
 - **Sessions are kept on the device** they were run on. Saving a flight as a
   playlist puts it in Spotify, where it can be shared like any other.
 - **Samples** come from Genius (samples and "interpolations", meaning a melody,

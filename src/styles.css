@@ -608,3 +608,24 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 /* Posters are portrait: show the whole sheet rather than a square crop. */
 .gallery-tall .gallery-item { width: 150px; }
 .gallery-tall .gallery-item img { width: 150px; height: 212px; object-fit: contain; background: #0b0b0e; }
+
+/* Guided setup and the extras list */
+.steps { margin: 0 0 6px; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.45; color: var(--muted); }
+.steps b { color: var(--text); font-weight: 600; }
+.steps a, .extra-how a { color: var(--text); text-decoration: underline; }
+.copy-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.copy-row code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; color: var(--text); -webkit-user-select: text; user-select: text; }
+.copy-row .btn { flex: none; }
+.setting-note { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.setting-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.setting-actions .btn { text-decoration: none; color: var(--text); }
+.setting-actions .btn-primary { color: var(--accent-ink); }
+.extras { list-style: none; margin: 4px 0 0; padding: 0; }
+.extras li + li { border-top: 1px solid var(--surface-2); }
+.extra { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; text-align: left; }
+.extra-name { flex: 1; min-width: 0; font-weight: 600; }
+.extra-state { font-size: 13px; color: var(--muted); }
+.dot { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--muted); }
+.dot-on { background: var(--accent); border-color: var(--accent); }
+.extra-how { padding: 0 0 12px 19px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.extra-how p { margin: 0; }
