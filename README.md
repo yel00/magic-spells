@@ -98,6 +98,11 @@ remote, so nothing here streams or stores music.
 - Reception on album pages: review scores (the publications' own ratings, and
   Metacritic where recorded) and Wikipedia's account of the reviews, plus
   links to AllMusic, Pitchfork and similar pages where MusicBrainz has them
+- ASCII cover on Now Playing: tap the cover (or the ASCII button on it) to see
+  the artwork drawn in characters, moving in time with the song's tempo.
+  Effects switches three movements on or off (Glitch, Blocks, Shimmer), picks
+  how the cover wears away as the song plays (Dissolve, Erode, Close in, or
+  off), and its colours. What is left of the cover is what is left of the song
 - Lyrics on Now Playing: time-synced where available, with the current line
   highlighted and tap-to-jump; plain lyrics otherwise
 - iPhone layout (tab bar) and iPad layout (sidebar, side-by-side now playing)
@@ -372,6 +377,18 @@ non-commercial use only.
   reuse, so the app links to them rather than copying. The player
   ([alphaTab](https://alphatab.net), loaded only when a tab is opened) plays
   files you bring yourself. MIDI files are not supported.
+
+## How the ASCII cover works
+
+The cover is shrunk to 48 by 48 and each point becomes one character, heavier
+characters for brighter points. Movement is worked out from the song's tempo
+and how far into the track you are, so it stays in time when you skip around
+and holds still when paused. Spotify gives apps no audio, so it follows the
+beat, not the sound itself. The tempo comes from the same open-data lookup as
+the musician tools; it is approximate, and when a song has none on file the
+cover moves at 120 beats a minute. With a fade on, characters leave a few at a
+time on each beat and the cover is empty as the song ends. It draws thirty
+frames a second, on the device, and stops when the app is in the background.
 
 ## How notes sync
 

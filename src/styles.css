@@ -178,7 +178,7 @@ main {
 .now-context { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .now-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; }
 .now-art { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; margin: 8px 0; container-type: size; }
-.now-art .art { width: min(100cqw, 100cqh, 460px); height: min(100cqw, 100cqh, 460px); border-radius: 10px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); }
+.now-art .art { width: min(100cqw, 100cqh, 460px); height: min(100cqw, 100cqh, 460px); border-radius: 10px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); display: block; }
 .now-side { display: flex; flex-direction: column; gap: 14px; }
 .now-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .now-meta button { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -679,3 +679,21 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 .news-row .row-title { font-weight: 600; line-height: 1.3; }
 .news-meta { font-size: 12px; }
 .news-meta b { color: var(--accent); }
+
+/* The cover in ASCII, on Now Playing */
+.now-cover { position: relative; display: flex; }
+.cover-flip { display: block; padding: 0; border-radius: 10px; }
+.ascii-art { background: #050507; }
+.cover-tools { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 6px; }
+.cover-tool { height: 30px; padding: 0 11px; border-radius: 15px; background: rgba(5, 5, 7, 0.72); color: var(--text); font: 600 12px ui-monospace, 'SF Mono', Menlo, Consolas, monospace; letter-spacing: 0.02em; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.cover-tool:active { opacity: 0.7; }
+.ascii-options { position: absolute; left: 0; right: 0; bottom: 0; max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 8px; border-radius: 0 0 10px 10px; background: rgba(8, 8, 11, 0.8); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.ascii-row { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.ascii-row::-webkit-scrollbar { display: none; }
+.ascii-row .chip { flex: none; }
+.ascii-foot { display: flex; align-items: center; gap: 10px; }
+.ascii-foot .ascii-note { flex: 1; min-width: 0; }
+.ascii-foot .btn { flex: none; height: 30px; }
+.ascii-row > span { flex: none; width: 44px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.ascii-row .chip { height: 30px; padding: 0 11px; font-size: 12px; text-transform: none; }
+.ascii-note { margin: 0; font-size: 11px; line-height: 1.35; color: var(--muted); }
