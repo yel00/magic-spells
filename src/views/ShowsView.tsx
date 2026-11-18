@@ -13,7 +13,7 @@ import { invalidate, useData } from '../lib/useData';
 import { notes } from '../notes/store';
 import { artistShows, showById, ShowsNotConfigured } from '../shows';
 import { groupByBand, groupByYear, longDate, placeLine, recordingQuery, showUri } from '../shows/logic';
-import { addPhotos, photosFor, removePhoto, showsWithPhotos, type ShowPhoto } from '../shows/photos';
+import { addPhotos, photosFor, photoSync, removePhoto, showsWithPhotos, type ShowPhoto } from '../shows/photos';
 import { markShow, myShows, unmarkShow } from '../shows/store';
 import type { SetSong, Show, ShowSummary } from '../shows/types';
 import * as api from '../spotify/api';
@@ -128,7 +128,9 @@ function MyPhotos({ show }: { show: Show }) {
   const input = useRef<HTMLInputElement>(null);
 
   const load = () => photosFor(show.id).then(setPhotos).catch(() => setPhotos([]));
-  useEffect(() => { load(); }, [show.id]);
+  const { tick, status } = useStore(photoSync);
+  useEffect(() => { load(); }, [show.id, tick]);
+  const kept = status === 'synced' ? 'They are copied to your other devices.' : 'They stay on this device.';
 
   // Pictures live in the device's storage; each needs a temporary address to be shown.
   useEffect(() => {
@@ -144,7 +146,6 @@ function MyPhotos({ show }: { show: Show }) {
       const n = await addPhotos(show.id, [...files]);
       if (n) {
         markShow(show);
-        invalidate('shows:withphotos');
         toast(`${n} picture${n === 1 ? '' : 's'} added`);
       } else toast('Those files aren’t pictures.');
     } catch {
@@ -155,7 +156,7 @@ function MyPhotos({ show }: { show: Show }) {
   };
 
   const label = `${show.artist.name} · ${longDate(show.date)}`;
-  const pictures: Picture[] = photos.filter((p) => urls[p.id]).map((p) => ({ thumb: urls[p.id], full: urls[p.id], label, source: 'your pictures, kept on this device' }));
+  const pictures: Picture[] = photos.filter((p) => urls[p.id]).map((p) => ({ thumb: urls[p.id], full: urls[p.id], label, source: status === 'synced' ? 'your pictures, shared with your other devices' : 'your pictures, kept on this device' }));
 
   return (
     <>
@@ -172,7 +173,7 @@ function MyPhotos({ show }: { show: Show }) {
             ))}
           </div>
         )}
-        {!pictures.length && <p className="facts">Add your own photos from the night. They stay on this device.</p>}
+        {!pictures.length && <p className="facts">Add your own photos from the night. {kept}</p>}
         <div className="setting-actions">
           <button className="btn btn-small" onClick={() => input.current?.click()}>Add pictures</button>
           {photos.length > 0 && <button className="btn btn-small btn-quiet" onClick={() => setEditing(!editing)}>{editing ? 'Done' : 'Remove some'}</button>}
@@ -278,7 +279,9 @@ export function ArtistShowsView({ mbid }: { mbid: string }) {
 export function MyShowsView() {
   const { shows } = useStore(myShows);
   const allNotes = useStore(notes).notes;
-  const withPhotos = useData('shows:withphotos', showsWithPhotos).data;
+  const photoState = useStore(photoSync);
+  const { synced } = useStore(myShows);
+  const withPhotos = useData(`shows:withphotos:${photoState.tick}`, showsWithPhotos).data;
   const [by, setBy] = useState<'date' | 'band'>('date');
   const noted = new Set(allNotes.filter((n) => !n.deleted && n.subject_uri.startsWith('setlistfm:show:')).map((n) => n.subject_uri.split(':')[2]));
   const badge = (s: ShowSummary) => [noted.has(s.id) && 'notes', withPhotos?.has(s.id) && 'pictures'].filter(Boolean).join(' + ');
@@ -297,7 +300,15 @@ export function MyShowsView() {
           <div className="show-list">{g.shows.map((s) => <ShowRow key={s.id} show={s} showArtist={by === 'date'} badge={badge(s)} />)}</div>
         </section>
       ))}
-      {shows.length > 0 && <p className="fineprint">This list and your pictures are kept on this device. Notes sync with your other devices.</p>}
+      {shows.length > 0 && (
+        <p className="fineprint">
+          {synced !== 'synced'
+            ? 'This list and your pictures are kept on this device. Settings → Extras shows how to share them with your other devices.'
+            : photoState.status === 'synced'
+              ? 'Your concerts, notes and pictures are shared with your other devices.'
+              : 'Your concerts and notes are shared with your other devices. Pictures stay on this device until picture storage is added (Settings → Extras).'}
+        </p>
+      )}
     </div>
   );
 }

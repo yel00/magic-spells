@@ -7,6 +7,7 @@ export type SetupStatus = {
   concerts: boolean;
   setlists: boolean;
   sync: boolean;
+  photos: boolean;
   ai: boolean;
   aiNamedOnly: boolean;
 };
@@ -28,7 +29,8 @@ export type Extra = {
 
 export const EXTRAS: Extra[] = [
   { id: 'genius', name: 'Song background', adds: 'Writers, producers, samples and the story behind a song.', without: 'About this song shows less.', setting: 'GENIUS_ACCESS_TOKEN', where: 'Genius: create an API client, then Generate Access Token', link: 'https://genius.com/api-clients', cost: 'Free' },
-  { id: 'sync', name: 'Notes and tags on all your devices', adds: 'Notes and tags follow you between iPhone and iPad.', without: 'They stay on the device they were written on.', setting: 'DATABASE_URL', where: 'Vercel: Storage → Create Database → Neon, connect it to the project', link: 'https://vercel.com/dashboard', cost: 'Free tier' },
+  { id: 'sync', name: 'Notes, tags and concerts on all your devices', adds: 'Notes, tags, the concerts you were at and your concert area follow you between devices.', without: 'They stay on the device they were written on.', setting: 'DATABASE_URL', where: 'Vercel: Storage → Create Database → Neon, connect it to the project', link: 'https://vercel.com/dashboard', cost: 'Free tier' },
+  { id: 'photos', name: 'Concert pictures on all your devices', adds: 'Pictures you add to a show appear on your other devices. Needs the database above as well.', without: 'Pictures stay on the device they were added on.', setting: 'BLOB_READ_WRITE_TOKEN', where: 'Vercel: Storage → Create Database → Blob, connect it to the project (it adds the setting itself)', link: 'https://vercel.com/dashboard', cost: 'Free tier' },
   { id: 'lastfm', name: 'Better suggestions', adds: 'Stronger similar-artist data for Discover and the maps.', without: 'Suggestions use ListenBrainz, which needs no key.', setting: 'LASTFM_API_KEY', where: 'Last.fm: create an API account', link: 'https://www.last.fm/api/account/create', cost: 'Free' },
   { id: 'youtube', name: 'Videos inside the app', adds: 'Live performances play without leaving the app.', without: 'The app links out to YouTube.', setting: 'YOUTUBE_API_KEY', where: 'Google Cloud: enable YouTube Data API v3, create an API key', link: 'https://console.cloud.google.com/apis/library/youtube.googleapis.com', cost: 'Free, about 100 searches a day' },
   { id: 'concerts', name: 'Concerts near you', adds: 'Shows by artists you follow, near a place you choose.', without: 'The concert scanner is off.', setting: 'TICKETMASTER_API_KEY', where: 'Ticketmaster: register for a developer key', link: 'https://developer.ticketmaster.com', cost: 'Free' },

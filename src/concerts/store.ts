@@ -15,6 +15,8 @@ export type ScanStatus = 'idle' | 'scanning' | 'done' | 'unconfigured' | 'failed
 
 interface ConcertState {
   place: Place | null;
+  /** When the area was last chosen, so the newest choice wins between devices. 0 = never chosen. */
+  placeAt: number;
   concerts: Concert[];
   /** Ids of shows the listener has already been shown. */
   seen: string[];
@@ -38,6 +40,8 @@ function load(): Partial<ConcertState> {
 const saved = load();
 export const concerts = createStore<ConcertState>({
   place: saved.place ?? null,
+  // An area chosen before syncing existed counts as chosen now, so it is the one other devices pick up.
+  placeAt: saved.placeAt ?? (saved.place ? Date.now() : 0),
   concerts: saved.concerts ?? [],
   seen: saved.seen ?? [],
   scannedAt: saved.scannedAt ?? 0,
@@ -46,17 +50,42 @@ export const concerts = createStore<ConcertState>({
   progress: [0, 0],
 });
 
+if (saved.place && !saved.placeAt) queueMicrotask(persist);
+
 function persist() {
-  const { place, concerts: list, seen, scannedAt, watching } = concerts.get();
+  const { place, placeAt, concerts: list, seen, scannedAt, watching } = concerts.get();
   try {
-    localStorage.setItem(KEY(), JSON.stringify({ place, concerts: list, seen, scannedAt, watching }));
+    localStorage.setItem(KEY(), JSON.stringify({ place, placeAt, concerts: list, seen, scannedAt, watching }));
   } catch {
     /* storage unavailable: results last for this session only */
   }
 }
 
+const placeListeners: (() => void)[] = [];
+/** Lets the sync know the area was changed on this device. */
+export function onPlaceChange(fn: () => void) {
+  placeListeners.push(fn);
+}
+
 export function setPlace(place: Place | null) {
-  concerts.set({ place, concerts: [], scannedAt: 0, status: 'idle' });
+  concerts.set({ place, placeAt: Date.now(), concerts: [], scannedAt: 0, status: 'idle' });
+  persist();
+  placeListeners.forEach((fn) => fn());
+  if (place) scan(true);
+}
+
+const samePlace = (a: Place | null, b: Place | null) => JSON.stringify(a) === JSON.stringify(b);
+
+/** Take the area chosen on another device, if that choice is newer than this device's. */
+export function adoptPlace(place: Place | null, at: number) {
+  const s = concerts.get();
+  if (at <= s.placeAt) return;
+  if (samePlace(place, s.place)) {
+    concerts.set({ placeAt: at });
+    persist();
+    return;
+  }
+  concerts.set({ place, placeAt: at, concerts: [], scannedAt: 0, status: 'idle' });
   persist();
   if (place) scan(true);
 }

@@ -161,11 +161,16 @@ The same steps in full, for hosts other than Vercel or for reference.
    <https://developer.ticketmaster.com> and add it in Vercel as
    `TICKETMASTER_API_KEY`. Then open Discover → Concerts near you and pick
    your area.
-10. **Past shows and setlists (optional)**: sign in at <https://www.setlist.fm>,
+10. **Concert pictures on every device (optional)**: in the Vercel project,
+    open Storage → Create Database → Blob and connect it to the project. That
+    adds `BLOB_READ_WRITE_TOKEN` automatically; redeploy. It also needs the
+    database from step 6. Choose a private store if offered. Without it,
+    pictures stay on the device they were added on.
+11. **Past shows and setlists (optional)**: sign in at <https://www.setlist.fm>,
     apply for a key at <https://www.setlist.fm/settings/api> (free for
     non-commercial use) and add it in Vercel as `SETLISTFM_API_KEY`. Without
     it, artist pages link out to setlist.fm.
-11. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
+12. **On the iPhone/iPad**: open the site in Safari → Share → Add to Home Screen.
 
 ## iPhone and iPad app
 
@@ -263,8 +268,12 @@ Playing a setlist plays the studio versions Spotify has, not the night
 itself; covers are looked up under the original artist if the band never
 released them. Recordings are a YouTube search for the artist, venue and
 year, so they are likely matches, not guaranteed ones. The list of shows you
-were at and your pictures (shrunk to 1600 pixels) are kept on the device;
-notes about a show sync like any other note. setlist.fm's key is free for
+were at, and the area you watch for upcoming concerts, sync between your
+devices through the same database as notes. Your pictures are shrunk to 1600
+pixels and saved on the device; if a Vercel Blob store is connected they are
+also copied there and appear on your other devices. A picture is only ever
+handed back to the Spotify account that added it. Removing a picture or
+un-marking a show on one device does the same on the others. setlist.fm's key is free for
 non-commercial use only.
 
 ## How cross-linking and lyrics work

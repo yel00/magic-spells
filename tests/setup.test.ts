@@ -12,7 +12,7 @@ describe('setup status', () => {
 
   it('reports what is on, and never echoes a key', () => {
     const s = setupStatus({ GENIUS_ACCESS_TOKEN: 'g-secret', DATABASE_URL: 'postgres://u:p@h/d', CLAUDE_API_KEY: ' "sk-ant-secret" ', AI_ALLOWED_USERS: 'me', YOUTUBE_API_KEY: '   ' });
-    expect(s).toEqual({ genius: true, lastfm: false, youtube: false, concerts: false, setlists: false, sync: true, ai: true, aiNamedOnly: true });
+    expect(s).toEqual({ genius: true, lastfm: false, youtube: false, concerts: false, setlists: false, sync: true, photos: false, ai: true, aiNamedOnly: true });
     expect(JSON.stringify(s)).not.toMatch(/secret|postgres/);
     expect(countOn(s)).toBe(3);
   });
