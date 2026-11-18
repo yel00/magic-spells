@@ -28,6 +28,7 @@ fetches it on the user's behalf, and each service's terms apply to that use.
 | Wikipedia, Wikidata | Biographies, album background and reception (text is CC BY-SA; shown with a link to the article) |
 | Discogs API | What a person is credited on |
 | Cover Art Archive | Album artwork beyond the front cover. Images belong to their rights holders and are shown, not stored. |
+| Pitchfork, Stereogum, NME, Consequence, Rolling Stone, The Quietus, NPR Music, DJ Mag, Bandcamp Daily, Clash, Loud and Quiet | News and review headlines from their public RSS feeds. Only the headline, a short summary and the picture are shown; each links to the article on the publication's site. |
 | setlist.fm | Past concerts and setlists, written by fans. Free for non-commercial use; each show links back to its setlist.fm page. |
 | Event Art Archive | Gig posters, flyers and tickets filed against MusicBrainz events. Thinly filled. Images belong to their rights holders and are shown, not stored. |
 | Wikimedia Commons (via Wikipedia) | Artist photographs. Licences vary by image; each links to its file page for credit. |

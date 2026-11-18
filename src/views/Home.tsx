@@ -1,4 +1,5 @@
 import { Card, Shelf, Status } from '../components/Shelf';
+import { NewsShelves } from '../components/News';
 import { GearIcon, ToolsIcon } from '../components/Icons';
 import { TrackRow } from '../components/TrackRow';
 import { greeting, names, uniqueBy } from '../lib/format';
@@ -29,6 +30,8 @@ export function Home() {
           <button className="icon-btn" onClick={() => go('/settings')} aria-label="Settings"><GearIcon /></button>
         </span>
       </header>
+
+      <NewsShelves />
 
       <Status loading={recent.loading && artists.loading} error={recent.error && artists.error} />
 

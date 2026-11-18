@@ -14,7 +14,10 @@ remote, so nothing here streams or stores music.
 - Now playing: artwork, seek, play/pause/skip, shuffle, repeat, volume
 - Spotify Connect: see every available device and move playback between them
 - Queue: see what's next, add any track
-- Home: jump back in, your playlists, top artists, on repeat lately
+- Home: music news and new album reviews at the top (headlines from music
+  publications' feeds, with stories about your most-played artists first;
+  tapping one opens it on the publication's site), then jump back in, top
+  artists, on repeat lately and your playlists
 - Library: playlists, albums, artists, liked songs
 - Search across Spotify
 - Album, artist and playlist pages; save albums, follow artists, like songs

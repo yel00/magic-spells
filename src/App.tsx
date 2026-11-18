@@ -36,6 +36,7 @@ import { NotesView } from './views/NotesView';
 import { PersonView } from './views/PersonView';
 import { Search } from './views/Search';
 import { Settings } from './views/Settings';
+import { NewsView } from './components/News';
 import { ArtistShowsView, MyShowsView, ShowView } from './views/ShowsView';
 import { openShows } from './shows/store';
 import { TabPlayerView } from './views/TabPlayerView';
@@ -100,12 +101,13 @@ export function App() {
   else if (route.name === 'show' && route.id) view = <ShowView key={route.id} id={route.id} />;
   else if (route.name === 'gigs' && route.id) view = <ArtistShowsView key={route.id} mbid={route.id} />;
   else if (route.name === 'shows') view = <MyShowsView />;
+  else if (route.name === 'news') view = <NewsView tab={route.id} />;
   else if (route.name === 'tools') view = <ToolsView />;
   else if (route.name === 'tab' && route.id) view = <TabPlayerView id={route.id} />;
   else if (route.name === 'settings') view = <Settings />;
   else view = <Home />;
 
-  const activeTab = route.name === 'tags' ? 'library' : ['concerts', 'map', 'genres', 'tasting', 'shows', 'show', 'gigs'].includes(route.name) ? 'discover' : TABS.some((t) => t.name === route.name) ? route.name : null;
+  const activeTab = route.name === 'news' ? 'home' : route.name === 'tags' ? 'library' : ['concerts', 'map', 'genres', 'tasting', 'shows', 'show', 'gigs'].includes(route.name) ? 'discover' : TABS.some((t) => t.name === route.name) ? route.name : null;
 
   return (
     <div className="app">
