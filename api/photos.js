@@ -2,7 +2,9 @@
 //   POST /api/photos            { deleted: [ids] }   list every picture; remove the ones named
 //   PUT  /api/photos?id=…&added=…   (image bytes)    store one picture
 //   GET  /api/photos?id=…                            fetch one picture
-// The files live in Vercel Blob (BLOB_READ_WRITE_TOKEN); which pictures belong
+// The files live in Vercel Blob. Vercel connects a store either with a token
+// (BLOB_READ_WRITE_TOKEN) or with the store's id (BLOB_STORE_ID), in which case
+// the library signs in as the project itself; which pictures belong
 // to whom is recorded in the database. A picture is only ever handed to the
 // Spotify account that added it.
 import { createHash } from 'node:crypto';
@@ -27,7 +29,7 @@ const looksLikeImage = (b) => b.length > 12 && ((b[0] === 0xff && b[1] === 0xd8)
 
 /** Stores a file privately where the store allows it; older stores only take public files with unguessable addresses. */
 async function store(pathname, bytes, token) {
-  const options = { token, addRandomSuffix: true, contentType: 'image/jpeg' };
+  const options = { ...(token && { token }), addRandomSuffix: true, contentType: 'image/jpeg' };
   try {
     return { access: 'private', ...(await put(pathname, bytes, { ...options, access: 'private' })) };
   } catch {
@@ -37,9 +39,9 @@ async function store(pathname, bytes, token) {
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
-  const token = String(process.env.BLOB_READ_WRITE_TOKEN || '').trim();
+  const token = String(process.env.BLOB_READ_WRITE_TOKEN || '').trim() || undefined;
   const dbs = database();
-  if (!token || !dbs) return res.status(501).json({ error: 'Picture sync is not set up: connect a Blob store and a database.' });
+  if (!(token || String(process.env.BLOB_STORE_ID || '').trim()) || !dbs) return res.status(501).json({ error: 'Picture sync is not set up: connect a Blob store and a database.' });
   const who = bearer(req);
   if (!who) return res.status(401).json({ error: 'Sign in with Spotify first.' });
 
@@ -52,7 +54,7 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
       const gone = await removePhotos(db, userId, Array.isArray(body.deleted) ? body.deleted : []);
-      if (gone.length) await del(gone, { token }).catch((e) => console.error('picture files not deleted', e));
+      if (gone.length) await del(gone, token ? { token } : undefined).catch((e) => console.error('picture files not deleted', e));
       return res.status(200).json({ photos: await listPhotos(db, userId) });
     }
 
@@ -74,7 +76,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const row = await photoRow(db, userId, photo.id);
       if (!row || row.deleted) return res.status(404).json({ error: 'No such picture.' });
-      const file = await get(row.pathname, { access: row.access, token });
+      const file = await get(row.pathname, { access: row.access, ...(token && { token }) });
       if (!file || !file.stream) return res.status(404).json({ error: 'No such picture.' });
       const bytes = Buffer.from(await new Response(file.stream).arrayBuffer());
       res.setHeader('Content-Type', 'image/jpeg');

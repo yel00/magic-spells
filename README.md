@@ -163,7 +163,8 @@ The same steps in full, for hosts other than Vercel or for reference.
    your area.
 10. **Concert pictures on every device (optional)**: in the Vercel project,
     open Storage → Create Database → Blob and connect it to the project. That
-    adds `BLOB_READ_WRITE_TOKEN` automatically; redeploy. It also needs the
+    adds `BLOB_READ_WRITE_TOKEN` (or, on newer stores, `BLOB_STORE_ID`)
+    automatically; redeploy. It also needs the
     database from step 6. Choose a private store if offered. Without it,
     pictures stay on the device they were added on.
 11. **Past shows and setlists (optional)**: sign in at <https://www.setlist.fm>,

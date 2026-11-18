@@ -12,7 +12,7 @@ export function setupStatus(env) {
     concerts: has(env, 'TICKETMASTER_API_KEY'),
     setlists: has(env, 'SETLISTFM_API_KEY'),
     sync: has(env, 'DATABASE_URL') || has(env, 'POSTGRES_URL'),
-    photos: has(env, 'BLOB_READ_WRITE_TOKEN') && (has(env, 'DATABASE_URL') || has(env, 'POSTGRES_URL')),
+    photos: (has(env, 'BLOB_READ_WRITE_TOKEN') || has(env, 'BLOB_STORE_ID')) && (has(env, 'DATABASE_URL') || has(env, 'POSTGRES_URL')),
     ai: !!readApiKey(env),
     aiNamedOnly: has(env, 'AI_ALLOWED_USERS'),
   };

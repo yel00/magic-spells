@@ -17,6 +17,12 @@ describe('setup status', () => {
     expect(countOn(s)).toBe(3);
   });
 
+  it('counts a Blob store connected by token or by id, but only with a database', () => {
+    expect(setupStatus({ BLOB_STORE_ID: 'store_x', DATABASE_URL: 'x' }).photos).toBe(true);
+    expect(setupStatus({ BLOB_READ_WRITE_TOKEN: 't', POSTGRES_URL: 'x' }).photos).toBe(true);
+    expect(setupStatus({ BLOB_READ_WRITE_TOKEN: 't' }).photos).toBe(false);
+  });
+
   it('has an entry in the app for every service the server reports', () => {
     const ids = EXTRAS.map((e) => e.id).sort();
     expect(ids).toEqual(Object.keys(setupStatus({})).filter((k) => k !== 'aiNamedOnly').sort());
