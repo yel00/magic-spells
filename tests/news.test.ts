@@ -35,6 +35,17 @@ describe('news feeds', () => {
     expect(parseFeed('<html>blocked</html>', { source: 'x', kind: 'news' })).toEqual([]);
   });
 
+  it('keeps only the music from a feed that mixes subjects, and spots its reviews', () => {
+    const entry = (title: string, cats: string[]) => `<item><title>${title}</title><link>https://example.com/${encodeURIComponent(title)}</link><pubDate>Tue, 17 Nov 2026 05:03:00 +0000</pubDate>${cats.map((c) => `<category><![CDATA[${c}]]></category>`).join('')}</item>`;
+    const xml = `<rss>${entry('Book Review: The Dry', ['crime fiction'])}${entry('The Shortlist for November 12', ['short stories'])}${entry('Album Feature: Forensic Manor by Solid Copy', ['indie rock'])}${entry('Solid Copy at the Bowery', ['record review'])}${entry('Monday Music: November 16', ['new music'])}</rss>`;
+    const items = parseFeed(xml, { source: 'Mixed', kind: 'news', skip: /\bbook review\b|\bshort stor(y|ies)\b/i, reviewWhen: /\b(album|ep|record) (feature|review)\b/i });
+    expect(items.map((i: NewsItem) => [i.title, i.kind])).toEqual([
+      ['Album Feature: Forensic Manor by Solid Copy', 'review'],
+      ['Solid Copy at the Bowery', 'review'],
+      ['Monday Music: November 16', 'news'],
+    ]);
+  });
+
   it('merges newest first without letting one site take over', () => {
     const now = Date.parse('2026-11-18T00:00:00Z');
     const item = (source: string, n: number, hoursAgo: number) => ({ title: `${source} ${n}`, link: `https://${source}/${n}`, source, kind: 'news', at: now - hoursAgo * 3_600_000, image: '', summary: '' });

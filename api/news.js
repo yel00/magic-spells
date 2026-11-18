@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   }
   res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=86400');
   return res.status(200).json({
-    news: mergeNews(all.filter((i) => i.kind === 'news'), { limit: 36, perSource: 5 }),
-    reviews: mergeNews(all.filter((i) => i.kind === 'review'), { limit: 24, perSource: 5 }),
+    news: mergeNews(all.filter((i) => i.kind === 'news'), { limit: 50, perSource: 5 }),
+    reviews: mergeNews(all.filter((i) => i.kind === 'review'), { limit: 30, perSource: 5 }),
   });
 }

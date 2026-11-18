@@ -13,6 +13,14 @@ export const FEEDS = [
   { source: 'NPR Music', kind: 'news', url: 'https://www.npr.org/rss/rss.php?id=1039' },
   { source: 'DJ Mag', kind: 'news', url: 'https://djmag.com/feed' },
   { source: 'Bandcamp Daily', kind: 'news', url: 'https://daily.bandcamp.com/feed/' },
+  // One feed for music, books and short stories: keep the music, and file record features as reviews.
+  {
+    source: 'Turn & Work',
+    kind: 'news',
+    url: 'https://www.turnandwork.com/feed/',
+    skip: /\bbook review\b|\bshort stor(y|ies)\b|\bthe shortlist\b/i,
+    reviewWhen: /\b(album|ep|record) (feature|review)\b/i,
+  },
   { source: 'Pitchfork', kind: 'review', url: 'https://pitchfork.com/feed/feed-album-reviews/rss' },
   { source: 'NME', kind: 'review', url: 'https://www.nme.com/reviews/album/feed' },
   { source: 'Rolling Stone', kind: 'review', url: 'https://www.rollingstone.com/music/music-album-reviews/feed/' },
@@ -54,8 +62,12 @@ function pictureIn(item) {
   return httpsOnly(decode(candidates.find(Boolean) || ''));
 }
 
-/** The headlines in one feed. Anything without a title, a link or a date is skipped. */
-export function parseFeed(xml, { source, kind }) {
+/**
+ * The headlines in one feed. Anything without a title, a link or a date is skipped.
+ * A feed may also give `skip` (entries to leave out) and `reviewWhen` (entries that are
+ * reviews); both are matched against the title and the categories the entry is filed under.
+ */
+export function parseFeed(xml, { source, kind, skip, reviewWhen }) {
   const items = String(xml || '').match(/<item[\s>][\s\S]*?<\/item>/gi) || [];
   return items
     .map((item) => {
@@ -63,7 +75,10 @@ export function parseFeed(xml, { source, kind }) {
       const link = httpsOnly(decode(tag(item, 'link')));
       const at = Date.parse(tag(item, 'pubDate') || tag(item, 'dc:date'));
       if (!title || !link || !Number.isFinite(at)) return null;
-      return { title, link, source, kind, at, image: pictureIn(item), summary: plain(tag(item, 'description')) };
+      // What the entry is filed under, for feeds that mix subjects.
+      const filed = `${title} | ${(item.match(/<category[^>]*>[\s\S]*?<\/category>/gi) || []).map((c) => plain(c)).join(' | ')}`;
+      if (skip && skip.test(filed)) return null;
+      return { title, link, source, kind: reviewWhen && reviewWhen.test(filed) ? 'review' : kind, at, image: pictureIn(item), summary: plain(tag(item, 'description')) };
     })
     .filter(Boolean);
 }
