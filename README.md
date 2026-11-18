@@ -1,7 +1,7 @@
 # Magic Spells
 
 A fast, lightweight remote and browser for Spotify, built for iPhone and iPad.
-Think of it as a small Roon for a Spotify account: it controls any Spotify
+Think of it as a music discovery and appreciation tool for a Spotify account: it controls any Spotify
 Connect speaker, shows your library, and (in later phases) adds the context
 Spotify leaves out — credits, biographies, lyrics notes, live versions, concerts.
 
