@@ -684,9 +684,16 @@ main:has(.mapview) { padding-bottom: 0; overflow: hidden; }
 .now-cover { position: relative; display: flex; }
 .cover-flip { display: block; padding: 0; border-radius: 10px; }
 .ascii-art { background: #050507; }
-.cover-tools { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 6px; }
-.cover-tool { height: 30px; padding: 0 11px; border-radius: 15px; background: rgba(5, 5, 7, 0.72); color: var(--text); font: 600 12px ui-monospace, 'SF Mono', Menlo, Consolas, monospace; letter-spacing: 0.02em; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-.cover-tool:active { opacity: 0.7; }
+.cover-links { position: absolute; top: 100%; right: -6px; display: flex; }
+.cover-links button { padding: 6px 7px; font: 500 10px ui-monospace, 'SF Mono', Menlo, Consolas, monospace; letter-spacing: 0.08em; color: var(--muted); opacity: 0.55; }
+.cover-links button.on { color: var(--accent); opacity: 0.9; }
+.cover-links button:active { opacity: 1; }
+.cover-flip { -webkit-touch-callout: none; }
+.now-head { display: flex; align-items: center; gap: 12px; }
+.now-head .now-meta { flex: 1; }
+.like-btn { flex: none; }
+.like-btn.on { color: var(--accent); }
+.like-btn:disabled { opacity: 0.35; }
 .ascii-options { position: absolute; left: 0; right: 0; bottom: 0; max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 8px; border-radius: 0 0 10px 10px; background: rgba(8, 8, 11, 0.8); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .ascii-row { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .ascii-row::-webkit-scrollbar { display: none; }

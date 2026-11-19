@@ -11,7 +11,8 @@ remote, so nothing here streams or stores music.
 ## What works today (phases 1–6)
 
 - Sign in with Spotify (no server, no secret — PKCE)
-- Now playing: artwork, seek, play/pause/skip, shuffle, repeat, volume
+- Now playing: artwork, seek, play/pause/skip, shuffle, repeat, volume, and a
+  heart to add the song to Liked Songs
 - Spotify Connect: see every available device and move playback between them
 - Queue: see what's next, add any track
 - Home: music news and new album reviews at the top (headlines from music
@@ -98,9 +99,10 @@ remote, so nothing here streams or stores music.
 - Reception on album pages: review scores (the publications' own ratings, and
   Metacritic where recorded) and Wikipedia's account of the reviews, plus
   links to AllMusic, Pitchfork and similar pages where MusicBrainz has them
-- ASCII cover on Now Playing: tap the cover (or the ASCII button on it) to see
-  the artwork drawn in characters, moving in time with the song's tempo.
-  Effects switches three movements on or off (Glitch, Blocks, Shimmer), picks
+- ASCII cover on Now Playing: tap the cover to see the artwork drawn in
+  characters, moving in time with the song's tempo. Nothing sits on the
+  picture: a small "fx" under its corner (or pressing and holding the cover)
+  opens the effects, which switch three movements on or off (Glitch, Blocks, Shimmer), picks
   how the cover wears away as the song plays (Dissolve, Erode, Close in, or
   off), and its colours. What is left of the cover is what is left of the song
 - Lyrics on Now Playing: time-synced where available, with the current line

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { formatTime, names } from '../lib/format';
 import { go, pathForUri } from '../lib/router';
 import { useStore } from '../lib/store';
@@ -9,6 +9,7 @@ import { useData } from '../lib/useData';
 import { trackAnalysis } from '../tools/lookup';
 import { Art, pickImage } from './Art';
 import { AsciiCover, AsciiOptions } from './AsciiCover';
+import { LikeButton } from './LikeButton';
 import {
   ChevronDown, DeviceIcon, MoreIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon, QueueIcon, RepeatIcon, ShuffleIcon, VolumeIcon,
 } from './Icons';
@@ -32,6 +33,29 @@ export function NowPlaying() {
     trackAnalysis({ name: item!.name, artist: item!.artists[0]?.name || '', durationMs: item!.duration_ms }).then((a) => a?.bpm ?? 0, () => 0),
   );
   const bpm = Math.round(tempo.data || DEFAULT_BPM);
+  const flip = () => {
+    setAscii({ on: !look.on });
+    setOptions(false);
+  };
+  // A tap flips the cover; pressing and holding it opens the effects.
+  const hold = useRef<{ timer?: ReturnType<typeof setTimeout>; held: boolean }>({ held: false });
+  const press = {
+    onPointerDown: () => {
+      hold.current.held = false;
+      hold.current.timer = setTimeout(() => {
+        hold.current.held = true;
+        if (asAscii) setOptions(true);
+      }, 450);
+    },
+    onPointerUp: () => clearTimeout(hold.current.timer),
+    onPointerLeave: () => clearTimeout(hold.current.timer),
+    onPointerCancel: () => clearTimeout(hold.current.timer),
+    onContextMenu: (e: React.SyntheticEvent) => e.preventDefault(),
+    onClick: () => {
+      if (hold.current.held && asAscii) return;
+      flip();
+    },
+  };
   if (!playback || !item) {
     return (
       <div className="now">
@@ -61,13 +85,14 @@ export function NowPlaying() {
       <div className="now-body">
         <div className="now-art">
           <div className="now-cover">
-            <button className="cover-flip" onClick={() => { setAscii({ on: !look.on }); setOptions(false); }} aria-label={look.on ? 'Show the real cover' : 'Show the cover in ASCII'} aria-pressed={look.on}>
+            <button className="cover-flip" {...press} aria-label={look.on ? 'Show the real cover' : 'Show the cover in ASCII'} aria-pressed={look.on}>
               {asAscii ? <AsciiCover key={cover} src={cover!} bpm={bpm} durationMs={item.duration_ms} onFail={() => setUnreadable(cover!)} /> : <Art images={item.album?.images} size={340} />}
             </button>
-            {cover && unreadable !== cover && !options && (
-              <div className="cover-tools">
-                <button className="cover-tool" onClick={() => { setAscii({ on: !look.on }); setOptions(false); }}>{look.on ? 'Cover' : 'ASCII'}</button>
-                {asAscii && <button className="cover-tool" onClick={() => setOptions(true)}>Effects</button>}
+            {/* Kept off the picture: two quiet words under its corner. Pressing and holding the cover also opens the effects. */}
+            {cover && unreadable !== cover && (
+              <div className="cover-links">
+                {asAscii && <button className={options ? 'on' : ''} onClick={() => setOptions(!options)} aria-expanded={options} aria-label="ASCII effects">fx</button>}
+                <button className={look.on ? 'on' : ''} onClick={flip} aria-pressed={look.on} aria-label={look.on ? 'Show the real cover' : 'Show the cover in ASCII'}>ascii</button>
               </div>
             )}
             {asAscii && options && <AsciiOptions settings={look} bpm={bpm} guessed={!tempo.data} onClose={() => setOptions(false)} />}
@@ -75,10 +100,13 @@ export function NowPlaying() {
         </div>
 
         <div className="now-side">
-          <div className="now-meta">
-            <button className="now-title" onClick={() => nav(item.album?.uri)}>{item.name}</button>
-            <button className="now-artist" onClick={() => nav(item.artists[0]?.uri)}>{names(item.artists)}</button>
-            {item.album && <button className="now-album" onClick={() => nav(item.album?.uri)}>{item.album.name}</button>}
+          <div className="now-head">
+            <div className="now-meta">
+              <button className="now-title" onClick={() => nav(item.album?.uri)}>{item.name}</button>
+              <button className="now-artist" onClick={() => nav(item.artists[0]?.uri)}>{names(item.artists)}</button>
+              {item.album && <button className="now-album" onClick={() => nav(item.album?.uri)}>{item.album.name}</button>}
+            </div>
+            {item.uri.startsWith('spotify:track:') && <LikeButton key={item.uri} uri={item.uri} size={28} />}
           </div>
 
           <div className="scrub">
