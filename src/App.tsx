@@ -39,6 +39,7 @@ import { Settings } from './views/Settings';
 import { NewsView } from './components/News';
 import { ArtistShowsView, MyShowsView, ShowView } from './views/ShowsView';
 import { openShows } from './shows/store';
+import { openHistory } from './history/store';
 import { TabPlayerView } from './views/TabPlayerView';
 import { ToolsView } from './views/ToolsView';
 
@@ -72,6 +73,7 @@ export function App() {
     openTags(userId);
     openTastings(userId);
     openShows(userId);
+    openHistory(userId);
     // Quietly re-check for concerts, at most once a day.
     scanConcerts();
   }, [userId]);

@@ -20,7 +20,9 @@ remote, so nothing here streams or stores music.
   tapping one opens it on the publication's site), then jump back in, top
   artists, on repeat lately and your playlists
 - Library: playlists, albums, artists, liked songs
-- Search across Spotify
+- Search across Spotify. Before you type, the Search page shows your recent
+  searches, what you recently opened from search results, and what you
+  recently played; search history follows you between devices
 - Album, artist and playlist pages; save albums, follow artists, like songs
 - Playlists: create one and add tracks from anywhere; on playlists you own,
   rename, edit the description, reorder and remove tracks, or delete the
@@ -391,6 +393,16 @@ the musician tools; it is approximate, and when a song has none on file the
 cover moves at 120 beats a minute. With a fade on, characters leave a few at a
 time on each beat and the cover is empty as the song ends. It draws thirty
 frames a second, on the device, and stops when the app is in the background.
+
+## How search history works
+
+A search is remembered when you press Search on the keyboard or open one of
+its results, along with the thing you opened. Each kind keeps its newest
+thirty. The list is saved on the device and, when the notes database is
+connected, shared between your devices: lists are merged entry by entry, so
+two devices never overwrite each other, and forgetting an entry or pressing
+Clear on one device removes it from the others. Recently played comes from
+Spotify, which keeps only your last 50 tracks.
 
 ## How notes sync
 

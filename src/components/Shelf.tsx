@@ -18,15 +18,18 @@ export function Card({
   images,
   to,
   round,
+  onOpen,
 }: {
   title: string;
   subtitle?: string;
   images: Image[] | null | undefined;
   to: string;
   round?: boolean;
+  /** Told when the card is opened, before the page changes. */
+  onOpen?: () => void;
 }) {
   return (
-    <button className={`card ${round ? 'card-round' : ''}`} onClick={() => go(to)}>
+    <button className={`card ${round ? 'card-round' : ''}`} onClick={() => { onOpen?.(); go(to); }}>
       <Art images={images} size={150} round={round} />
       <span className="card-title">{title}</span>
       {subtitle && <span className="card-sub">{subtitle}</span>}
