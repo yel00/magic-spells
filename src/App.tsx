@@ -22,6 +22,7 @@ import { TagsView } from './views/TagsView';
 import { TastingView } from './views/TastingView';
 import { openTastings } from './tasting/store';
 import * as api from './spotify/api';
+import { rememberedUser, rememberUser } from './spotify/auth';
 import { startPolling, stopPolling } from './state/player';
 import { openSheet, ui } from './state/ui';
 import { BrowseView } from './views/BrowseView';
@@ -57,7 +58,9 @@ export function App() {
   const route = useRoute();
   const { sheet, actionsFor, infoFor, noteDraft, tagsFor, lyrics, mix, video, toast } = useStore(ui);
   const me = useData('me', api.me);
-  const userId = me.data?.id;
+  // Until Spotify answers, use the account this device last saw, so the lists
+  // kept on the device are there straight away and on a bad connection.
+  const userId = me.data?.id ?? rememberedUser();
   const fresh = newCount(useStore(concerts));
   const main = useRef<HTMLElement>(null);
   const key = `${route.name}/${route.id || ''}`;
@@ -66,6 +69,26 @@ export function App() {
     startPolling();
     return stopPolling;
   }, []);
+
+  useEffect(() => {
+    if (me.data?.id) rememberUser(me.data.id);
+  }, [me.data?.id]);
+
+  // If Spotify didn't answer, ask again shortly and whenever the app comes back.
+  useEffect(() => {
+    if (!me.error) return;
+    const again = () => me.reload();
+    const timer = setTimeout(again, 10_000);
+    const shown = () => !document.hidden && again();
+    document.addEventListener('visibilitychange', shown);
+    window.addEventListener('online', again);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', shown);
+      window.removeEventListener('online', again);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.error]);
 
   useEffect(() => {
     if (!userId) return;
