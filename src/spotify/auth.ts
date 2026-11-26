@@ -6,6 +6,7 @@ const KEY = {
   token: 'ms.token',
   pkce: 'ms.pkce',
   demo: 'ms.demo',
+  user: 'ms.user',
 };
 
 export const SCOPES = [
@@ -91,6 +92,21 @@ export function isSignedIn(): boolean {
 export function signOut() {
   write(KEY.token, null);
   write(KEY.demo, null);
+  write(KEY.user, null);
+}
+
+/**
+ * The Spotify account last seen on this device. Everything kept on the device
+ * (your concerts, notes, tags) is filed under it, so remembering it lets those
+ * lists open at once instead of waiting on Spotify, which on a poor connection
+ * may answer late or not at all.
+ */
+export function rememberedUser(): string | undefined {
+  return isDemo() ? undefined : read<string>(KEY.user) || undefined;
+}
+
+export function rememberUser(id: string) {
+  if (!isDemo() && id) write(KEY.user, id);
 }
 
 export function base64url(bytes: Uint8Array): string {
@@ -194,6 +210,7 @@ export async function getAccessToken(force = false): Promise<string> {
       .catch((e) => {
         // A dead refresh token means the user has to sign in again.
         write(KEY.token, null);
+        write(KEY.user, null);
         window.dispatchEvent(new Event('ms:signedout'));
         throw e;
       })

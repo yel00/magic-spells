@@ -22,6 +22,12 @@ let rev = 0;
 let all: LocalShow[] = [];
 let timer: ReturnType<typeof setTimeout> | undefined;
 let running: Promise<void> | null = null;
+// A failed sync is tried again by itself: a phone coming back to the app on a
+// mobile connection often drops the first request. After these it waits for
+// the next time the app is opened or brought forward.
+const RETRY_AFTER = [3_000, 10_000, 30_000];
+let retries = 0;
+let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
 function persist() {
   try {
@@ -76,6 +82,7 @@ export function unmarkShow(id: string) {
 export function syncShows(): Promise<void> {
   if (!key || isDemo() || myShows.get().synced === 'unconfigured') return Promise.resolve();
   if (running) return running.then(() => (all.some((s) => s.dirty) ? syncShows() : undefined));
+  clearTimeout(retryTimer);
   running = (async () => {
     const changes: MarkedShow[] = all.filter((s) => s.dirty).map(({ dirty: _d, ...s }) => s);
     const { place, placeAt } = concerts.get();
@@ -86,7 +93,9 @@ export function syncShows(): Promise<void> {
         body: JSON.stringify({ since: rev, changes, place: placeAt ? { value: place, updated_at: placeAt } : undefined }),
       });
       const isJson = res.headers.get('content-type')?.includes('json');
-      if (res.status === 501 || !isJson) {
+      // Only a server that says sync isn't there counts as not set up. An error
+      // page (a timeout, a bad gateway) is a failure to retry, not a verdict.
+      if (res.status === 501 || (res.status === 404 && !isJson) || (res.ok && !isJson)) {
         myShows.set({ synced: 'unconfigured' });
         return;
       }
@@ -95,10 +104,12 @@ export function syncShows(): Promise<void> {
       rev = data.rev;
       publish(mergeShows(markSent(all, changes), data.shows));
       myShows.set({ synced: 'synced' });
+      retries = 0;
       if (data.place) adoptPlace(data.place.value, data.place.updated_at);
       void syncPhotos();
     } catch {
       myShows.set({ synced: 'offline' });
+      if (retries < RETRY_AFTER.length) retryTimer = setTimeout(syncShows, RETRY_AFTER[retries++]);
     }
   })().finally(() => {
     running = null;
@@ -114,6 +125,13 @@ onPlaceChange(() => {
 
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) syncShows();
+    if (!document.hidden) {
+      retries = 0;
+      syncShows();
+    }
+  });
+  window.addEventListener('online', () => {
+    retries = 0;
+    syncShows();
   });
 }
